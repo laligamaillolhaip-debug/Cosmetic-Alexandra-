@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+backend/app/data/app.db
+.venv/
+backend/app/data/http_cache/
+.$*.bkp
