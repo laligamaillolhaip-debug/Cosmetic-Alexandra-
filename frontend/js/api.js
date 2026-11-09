@@ -186,3 +186,56 @@ const Favorites = {
   },
 };
 
+/* ---------- ожидание ответа модели ---------- */
+/**
+ * Показывает живой индикатор со счётчиком секунд, пока модель думает.
+ * Возвращает функцию остановки: stop() — вызвать после получения ответа.
+ */
+function showThinking(el, text = "Модель думает") {
+  const started = Date.now();
+  el.innerHTML = `
+    <div class="ai-thinking">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="thinking-text">${text}</span>
+      <span class="thinking-timer" data-timer>0 с</span>
+    </div>`;
+  const timerEl = el.querySelector("[data-timer]");
+  const id = setInterval(() => {
+    const sec = Math.round((Date.now() - started) / 1000);
+    timerEl.textContent = `${sec} с`;
+    if (sec === 25) timerEl.textContent = `${sec} с · дольше обычного`;
+  }, 500);
+  return () => clearInterval(id);
+}
+
+const BADGES = {
+  match: ["badge-match", "по составу"],
+  value: ["badge-value", "выгодная цена"],
+  gentle: ["badge-gentle", "мягкая формула"],
+  popular: ["badge-popular", "популярно"],
+  manual: ["badge-manual", "добавлено вручную"],
+};
+function badgeHtml(badge) {
+  const [cls, label] = BADGES[badge] || BADGES.match;
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+
+/* ---------- аккаунт ---------- */
+const Auth = {
+  /** Текущий пользователь или null, если не вошёл. */
+  async me() {
+    try {
+      return await api("/api/auth/me", {}, { noRedirect: true });
+    } catch {
+      return null;
+    }
+  },
+  async logout() {
+    try {
+      await api("/api/auth/logout", { method: "POST" }, { noRedirect: true });
+    } catch {}
+    Store.clear();
+    window.location.href = "login.html";
+  },
+};
