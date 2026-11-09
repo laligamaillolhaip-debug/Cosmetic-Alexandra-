@@ -74,5 +74,57 @@
     </div>
   </div>
 
+  <script src="js/api.js"></script>
+  <script>
+    let mode = "login";
+    const msg = document.getElementById("msg");
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.onclick = () => {
+        mode = tab.dataset.mode;
+        document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === tab));
+        const isLogin = mode === "login";
+        document.getElementById("title").textContent = isLogin ? "Вход в аккаунт" : "Регистрация";
+        document.getElementById("subtitle").textContent = isLogin
+          ? "Чтобы план ухода сохранялся и был доступен с любого устройства."
+          : "Займёт полминуты: почта и пароль — больше ничего не нужно.";
+        document.getElementById("submitBtn").textContent = isLogin ? "ВОЙТИ" : "СОЗДАТЬ АККАУНТ";
+        document.getElementById("password").autocomplete = isLogin ? "current-password" : "new-password";
+        msg.className = "msg";
+      };
+    });
+
+    document.getElementById("form").onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submitBtn");
+      const original = btn.textContent;
+      btn.disabled = true; btn.textContent = "ПОДОЖДИ...";
+      msg.className = "msg";
+      try {
+        const data = await api(`/api/auth/${mode}`, {
+          method: "POST",
+          body: JSON.stringify({
+            email: document.getElementById("email").value.trim(),
+            password: document.getElementById("password").value,
+          }),
+        }, { noRedirect: true });
+
+        Store.setEmail(data.email);
+        if (data.profile_id) {
+          Store.setProfileId(data.profile_id);
+          if (data.budget_month) Store.setBudget(data.budget_month);
+          window.location.href = "plan.html";
+        } else {
+          // аккаунт есть, а профиля ещё нет — сразу на опрос
+          localStorage.removeItem("yadro_profile_id");
+          window.location.href = "quiz.html";
+        }
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = "msg error";
+        btn.disabled = false; btn.textContent = original;
+      }
+    };
+  </script>
 </body>
 </html>
