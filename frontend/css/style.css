@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* ============ дизайн-токены ============ */
+:root{
+  /* фон: глубокий сине-чёрный, не плоский чёрный */
+  --bg:#080B12;
+  --bg-2:#0C111A;
+  --surface:#121926;
+  --surface-2:#18202F;
+  --surface-3:#1F2937;
+  --surface-hover:#1C2534;
+
+  --border:rgba(255,255,255,0.07);
+  --border-strong:rgba(255,255,255,0.13);
+
+  --text:#F1F5FA;
+  --text-muted:#96A3B6;
+  --text-faint:#68758A;
+
+  --accent:#3B9EFF;
+  --accent-2:#22D3EE;
+  --accent-deep:#1D6FD0;
+  --accent-soft:rgba(59,158,255,0.14);
+  --accent-glow:rgba(59,158,255,0.32);
+  --gradient:linear-gradient(135deg,#3B9EFF 0%,#22D3EE 100%);
+
+  --success:#34D399;
+  --success-soft:rgba(52,211,153,0.13);
+  --warning:#FBBF24;
+  --warning-soft:rgba(251,191,36,0.13);
+  --danger:#F87171;
+
+  --font-display:'Manrope','Segoe UI',sans-serif;
+  --font-body:'Manrope','Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono','Consolas',monospace;
+
+  --r-xs:8px;
+  --r-sm:12px;
+  --r-md:16px;
+  --r-lg:22px;
+  --r-xl:28px;
+  --r-full:999px;
+
+  --shadow-sm:0 2px 8px rgba(0,0,0,0.28);
+  --shadow-md:0 8px 24px rgba(0,0,0,0.38);
+  --shadow-lg:0 18px 46px rgba(0,0,0,0.5);
+  --shadow-accent:0 8px 26px rgba(59,158,255,0.32);
+
+  --nav-h:74px;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+html,body{margin:0; padding:0;}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  padding-bottom:calc(var(--nav-h) + 20px);
+  position:relative;
+}
+/* мягкое свечение сверху — уводит от «плоской черноты» */
+body::before{
+  content:'';
+  position:fixed; inset:0;
+  background:
+    radial-gradient(900px 480px at 15% -180px, rgba(59,158,255,0.16), transparent 70%),
+    radial-gradient(700px 420px at 90% -120px, rgba(34,211,238,0.10), transparent 70%);
+  pointer-events:none;
+  z-index:0;
+}
+body > *{position:relative; z-index:1;}
+
+h1,h2,h3,h4{font-family:var(--font-display); margin:0; text-wrap:balance; letter-spacing:-0.02em;}
+h1{font-size:30px; font-weight:800; line-height:1.15;}
+h2{font-size:21px; font-weight:700;}
+p{margin:0;}
+a{color:var(--accent); text-decoration:none;}
+button{font-family:inherit; cursor:pointer;}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--r-xs);}
+::selection{background:var(--accent-soft); color:var(--text);}
+
