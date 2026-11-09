@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ядро — уход за кожей</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body{padding-bottom:0;}
+  .hero{min-height:100vh; display:flex; align-items:center; padding:40px 22px;}
+  .hero-inner{max-width:560px; margin:0 auto; width:100%; display:flex; flex-direction:column; gap:24px;}
+  .hero h1{font-size:38px;}
+  .hero h1 .grad{
+    background:var(--gradient); -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .hero-lead{color:var(--text-muted); font-size:16px; line-height:1.65;}
+  .feature-list{display:flex; flex-direction:column; gap:12px; margin-top:4px;}
+  .feature-row{
+    display:flex; align-items:center; gap:14px; font-size:14px; color:var(--text-muted);
+    padding:15px 17px; border-radius:var(--r-lg);
+    background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.012));
+    border:1px solid var(--border);
+  }
+  .feature-row .ic{
+    width:38px; height:38px; flex:0 0 auto; border-radius:var(--r-sm);
+    background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center;
+  }
+  @media (max-width:520px){ .hero h1{font-size:31px;} }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="wordmark fade-in">
+        <span class="mark">Я</span><span class="name">ЯДРО</span>
+      </div>
+      <h1 class="fade-in">Уход за кожей <span class="grad">по твоему бюджету</span>, собранный ИИ.</h1>
+      <p class="hero-lead fade-in">Расскажи о своей коже и сколько готов тратить — соберём план по шагам. Каждое средство можно спросить: «нужно ли оно мне сейчас» и получить прямой ответ.</p>
+
+      <div class="feature-list">
+        <div class="feature-row fade-in"><span class="ic" id="ic1"></span>Сравниваем цены по магазинам и находим дешевле</div>
+        <div class="feature-row fade-in"><span class="ic" id="ic2"></span>Смотрим на состав, а не только на рейтинг</div>
+        <div class="feature-row fade-in"><span class="ic" id="ic3"></span>Календарь: что наносить утром и вечером</div>
+      </div>
+
+      <button class="btn-primary fade-in" id="start" style="margin-top:6px;">СОБРАТЬ МОЙ ПЛАН</button>
+    </div>
+  </div>
+
+</body>
+</html>
