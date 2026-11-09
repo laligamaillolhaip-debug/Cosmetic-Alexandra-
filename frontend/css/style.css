@@ -187,3 +187,56 @@ button{font-family:inherit; cursor:pointer;}
   .nav-item svg{width:17px; height:17px;}
 }
 
+/* ============ типографика страницы ============ */
+.page-head{padding:34px 0 22px; display:flex; flex-direction:column; gap:8px;}
+.page-head p{color:var(--text-muted); font-size:14px;}
+.eyebrow{
+  font-family:var(--font-mono); font-size:11px; color:var(--accent);
+  letter-spacing:0.1em; text-transform:uppercase;
+}
+.step-label{font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint); letter-spacing:0.06em; text-transform:uppercase;}
+
+/* ============ карточки ============ */
+.card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-sm);
+}
+
+/* ============ кнопки ============ */
+.btn-primary{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; border:none;
+  background:var(--gradient); color:#04121F;
+  font-family:var(--font-display); font-weight:800; font-size:15px;
+  padding:17px 20px; border-radius:var(--r-md);
+  box-shadow:var(--shadow-accent);
+  transition:transform .18s var(--ease), box-shadow .18s var(--ease), opacity .18s var(--ease);
+}
+.btn-primary:not(:disabled):hover{transform:translateY(-2px); box-shadow:0 12px 32px rgba(59,158,255,0.42);}
+.btn-primary:not(:disabled):active{transform:translateY(0);}
+.btn-primary:disabled{opacity:0.35; box-shadow:none; cursor:not-allowed;}
+
+.btn-ghost{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%;
+  border:1px solid var(--border-strong); background:rgba(255,255,255,0.03); color:var(--text);
+  font-family:var(--font-display); font-weight:700; font-size:14px;
+  padding:15px 20px; border-radius:var(--r-md);
+  transition:background .18s var(--ease), border-color .18s var(--ease), transform .18s var(--ease);
+}
+.btn-ghost:hover{background:rgba(59,158,255,0.09); border-color:rgba(59,158,255,0.4); transform:translateY(-1px);}
+
+.icon-btn{
+  display:flex; align-items:center; justify-content:center;
+  width:42px; height:42px; flex:0 0 auto;
+  border:1px solid var(--border); background:rgba(255,255,255,0.04);
+  border-radius:var(--r-full); color:var(--text-muted);
+  transition:all .18s var(--ease);
+}
+.icon-btn:hover{color:var(--text); border-color:var(--border-strong); background:rgba(255,255,255,0.08);}
+.icon-btn svg{width:19px; height:19px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+.icon-btn.fav-active{color:var(--danger); border-color:rgba(248,113,113,0.4); background:rgba(248,113,113,0.12);}
+.icon-btn.fav-active svg{fill:currentColor;}
+
