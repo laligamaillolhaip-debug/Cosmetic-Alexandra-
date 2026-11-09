@@ -129,3 +129,60 @@ function renderTopbar(activeHref) {
 
 function fmtPrice(n) { return n.toLocaleString("ru-RU") + " ₽"; }
 
+/* ---------- источник цены ---------- */
+const PRICE_SOURCES = {
+  seed: {
+    cls: "src-seed", label: "референс",
+    title: "Ориентировочная цена по рынку, не live-данные",
+  },
+  feed: {
+    cls: "src-feed", label: "фид",
+    title: "Получено из партнёрского товарного фида магазина",
+  },
+  scraper: {
+    cls: "src-live", label: "live",
+    title: "Собрано с сайта магазина в вежливом режиме",
+  },
+};
+
+function sourceInfo(priceObj) {
+  return PRICE_SOURCES[priceObj?.source] || PRICE_SOURCES.seed;
+}
+
+/** Цена вместе с пометкой источника: живые цены выделяются цветом. */
+function priceHtml(priceObj) {
+  if (!priceObj) return `<span class="price">—</span>`;
+  const s = sourceInfo(priceObj);
+  return `<span class="price ${s.cls}" title="${s.title}">${fmtPrice(priceObj.price)}</span>`;
+}
+
+function sourceTag(priceObj) {
+  const s = sourceInfo(priceObj);
+  if (s === PRICE_SOURCES.seed) return "";
+  return `<span class="src-tag ${s.cls}" title="${s.title}">${s.label}</span>`;
+}
+
+/* ---------- избранное ---------- */
+const Favorites = {
+  ids: new Set(),
+  async load(profileId) {
+    const { ids } = await api(`/api/favorites/${profileId}`);
+    this.ids = new Set(ids);
+    return this.ids;
+  },
+  has(productId) { return this.ids.has(productId); },
+  async toggle(profileId, productId) {
+    if (this.ids.has(productId)) {
+      await api(`/api/favorites/${profileId}/${productId}`, { method: "DELETE" });
+      this.ids.delete(productId);
+      return false;
+    }
+    await api(`/api/favorites/${profileId}`, {
+      method: "POST",
+      body: JSON.stringify({ product_id: productId }),
+    });
+    this.ids.add(productId);
+    return true;
+  },
+};
+
