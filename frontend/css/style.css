@@ -86,3 +86,24 @@ button{font-family:inherit; cursor:pointer;}
 :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:var(--r-xs);}
 ::selection{background:var(--accent-soft); color:var(--text);}
 
+/* ============ скроллбары ============ */
+*{scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.16) transparent;}
+::-webkit-scrollbar{width:11px; height:11px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,0.14);
+  border-radius:var(--r-full);
+  border:3px solid transparent;
+  background-clip:padding-box;
+}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.26); background-clip:padding-box;}
+::-webkit-scrollbar-corner{background:transparent;}
+
+/* горизонтальные ленты чипов — скроллбар прячем совсем */
+.no-scrollbar{scrollbar-width:none; -ms-overflow-style:none;}
+.no-scrollbar::-webkit-scrollbar{display:none;}
+
+/* ============ раскладка ============ */
+.container{max-width:1140px; margin:0 auto; padding:0 22px;}
+.container-narrow{max-width:560px; margin:0 auto; padding:0 22px;}
+
