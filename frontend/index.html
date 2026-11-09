@@ -49,5 +49,30 @@
     </div>
   </div>
 
+  <script src="js/api.js"></script>
+  <script>
+    document.getElementById("ic1").innerHTML = svg("catalog", 19);
+    document.getElementById("ic2").innerHTML = svg("serum", 19);
+    document.getElementById("ic3").innerHTML = svg("calendar", 19);
+
+    const startBtn = document.getElementById("start");
+
+    // куда вести: не вошёл → вход, вошёл без профиля → опрос, иначе → план
+    let target = "login.html";
+    Auth.me().then(me => {
+      if (!me) return;
+      Store.setEmail(me.email);
+      if (me.profile_id) {
+        Store.setProfileId(me.profile_id);
+        if (me.budget_month) Store.setBudget(me.budget_month);
+        target = "plan.html";
+        startBtn.textContent = "ОТКРЫТЬ МОЙ ПЛАН";
+      } else {
+        target = "quiz.html";
+      }
+    });
+
+    startBtn.onclick = () => { window.location.href = target; };
+  </script>
 </body>
 </html>
