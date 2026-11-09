@@ -81,3 +81,51 @@ function svg(name, size = 20, cls = "") {
 }
 function iconSvg(name, size = 26) { return svg(ICONS[name] ? name : "serum", size); }
 
+/* ---------- шапка и навигация ---------- */
+const NAV_ITEMS = [
+  { href: "plan.html", label: "План", icon: "plan" },
+  { href: "catalog.html", label: "Каталог", icon: "catalog" },
+  { href: "calendar.html", label: "Календарь", icon: "calendar" },
+  { href: "chat.html", label: "Чат", icon: "chat" },
+  { href: "profile.html", label: "Профиль", icon: "user" },
+];
+
+const SKIN_TYPE_LABELS = {
+  dry: "Сухая", oily: "Жирная", combination: "Комбинированная",
+  sensitive: "Чувствительная", normal: "Нормальная",
+};
+const CONCERN_LABELS = {
+  acne: "Акне и воспаления", pores: "Расширенные поры",
+  dehydration: "Обезвоженность", sensitivity: "Раздражения после бритья",
+  aging: "Первые признаки старения", dullness: "Тусклый цвет лица",
+};
+
+function renderNav(active) {
+  const el = document.getElementById("appnav");
+  if (!el) return;
+  el.innerHTML = NAV_ITEMS.map(item => `
+    <a class="nav-item ${item.href === active ? "active" : ""}" href="${item.href}">
+      ${svg(item.icon, 21)}<span>${item.label}</span>
+    </a>`).join("");
+}
+
+function renderTopbar(activeHref) {
+  const el = document.getElementById("topbar");
+  if (!el) return;
+  const budget = Store.getBudget();
+  el.innerHTML = `
+    <a class="wordmark" href="plan.html">
+      <span class="mark">Я</span><span class="name">ЯДРО</span>
+    </a>
+    <div class="topbar-right">
+      ${budget ? `<span class="topbar-budget">${budget.toLocaleString("ru-RU")} ₽/мес</span>` : ""}
+      <nav id="appnav" class="appnav"></nav>
+      <button class="icon-btn" id="logoutBtn" title="Выйти из аккаунта">${svg("logout", 18)}</button>
+    </div>`;
+  renderNav(activeHref);
+  const out = document.getElementById("logoutBtn");
+  if (out) out.onclick = () => Auth.logout();
+}
+
+function fmtPrice(n) { return n.toLocaleString("ru-RU") + " ₽"; }
+
