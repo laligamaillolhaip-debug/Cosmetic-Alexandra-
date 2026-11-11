@@ -14,7 +14,6 @@ def test_register_success(client):
     assert data["email"] == "new@example.com"
     assert data["profile_id"] is None
     
-    # Проверяем, что кука установилась
     assert "yadro_session" in response.cookies
 
 def test_register_duplicate_email(client):
@@ -60,7 +59,7 @@ def test_login_no_user(client):
 
 def test_logout(client, test_user):
     """Выход из системы: кука должна удалиться."""
-    # Сначала логинимся
+    
     client.post("/api/auth/login", json={"email": test_user["email"], "password": test_user["password"]})
     
     # Выходим
@@ -68,8 +67,8 @@ def test_logout(client, test_user):
     assert response.status_code == 200
     assert response.json()["ok"] is True
     
-    # Проверяем, что куки больше нет (или она пустая)
-    # В TestClient куки хранятся в client.cookies
+
+    
     assert "yadro_session" not in client.cookies
 
 def test_me_unauthorized(client):
