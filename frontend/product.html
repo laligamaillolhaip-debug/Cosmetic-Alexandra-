@@ -50,6 +50,87 @@
       favBtn.classList.toggle("fav-active", active);
     };
 
+    function render({ product: p, prices, category_label }) {
+      document.getElementById("content").classList.remove("loading");
+      document.getElementById("content").innerHTML = `
+        <div class="hero-visual">${svg(p.icon, 76)}</div>
+
+        <div class="title-row">
+          <div>
+            <span class="eyebrow">${category_label}</span>
+            <h1 style="font-size:24px; margin-top:8px;">${p.name}</h1>
+            <div class="product-brand" style="font-size:13.5px; margin-top:6px;">${p.brand} · ${p.volume_ml} мл</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title"><h3>Цена по магазинам</h3><span>${prices.length} источника</span></div>
+          <div class="compare-table">
+            ${prices.map((pr, i) => `
+              <div class="compare-row ${i === 0 ? "best" : ""}">
+                <span class="compare-shop">
+                  ${pr.url ? `<a href="${pr.url}" target="_blank" rel="noopener nofollow">${pr.shop_name}</a>` : pr.shop_name}
+                  ${i === 0 ? '<span class="best-tag">выгоднее</span>' : ""}
+                  ${sourceTag(pr)}
+                </span>
+                <span class="compare-price ${sourceInfo(pr).cls}">${fmtPrice(pr.price)}</span>
+              </div>`).join("")}
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title"><h3>Состав и действие</h3></div>
+          <div class="actives-row">
+            ${p.actives.map(a => `<span class="ingredient-tag">${a.name}</span>`).join("")}
+          </div>
+          <p style="font-size:14px; color:var(--text-muted); line-height:1.65;">${p.description}</p>
+        </div>
+
+        <div id="aiSlot"></div>
+
+        <div class="cta-stack">
+          <button class="btn-ghost" id="askAiBtn">${svg("sparkle", 17)}Спросить ИИ: нужен ли мне этот продукт?</button>
+          <div style="display:flex; gap:11px;">
+            <button class="btn-primary" data-add-tod="morning">В утренний план</button>
+            <button class="btn-primary" data-add-tod="evening">В вечерний план</button>
+          </div>
+        </div>`;
+
+      document.querySelectorAll("[data-add-tod]").forEach(btn => {
+        btn.onclick = async () => {
+          const original = btn.textContent;
+          btn.disabled = true;
+          await api(`/api/plan/${profileId}/items`, {
+            method: "POST",
+            body: JSON.stringify({ product_id: productId, time_of_day: btn.dataset.addTod }),
+          });
+          btn.textContent = "Добавлено ✓";
+          setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1600);
+        };
+      });
+
+      document.getElementById("askAiBtn").onclick = async (e) => {
+        const btn = e.currentTarget;
+        btn.disabled = true;
+        const slot = document.getElementById("aiSlot");
+        slot.innerHTML = `<div class="ai-block"><div class="ai-label">${svg("sparkle", 14)}Ответ ИИ</div><div id="thinkSlot"></div></div>`;
+        const stopThinking = showThinking(document.getElementById("thinkSlot"), "Сверяю продукт с твоим планом");
+        try {
+          const { advice } = await api(`/api/products/${productId}/ai-advice`, {
+            method: "POST",
+            body: JSON.stringify({ profile_id: profileId }),
+          });
+          stopThinking();
+          slot.innerHTML = `<div class="ai-block fade-in"><div class="ai-label">${svg("sparkle", 14)}Ответ ИИ</div><p></p></div>`;
+          slot.querySelector("p").textContent = advice;
+        } catch (err) {
+          stopThinking();
+          slot.innerHTML = `<div class="ai-block muted fade-in"><div class="ai-label">ИИ недоступен</div><p></p></div>`;
+          slot.querySelector("p").textContent = err.message;
+        }
+        btn.disabled = false;
+      };
+    }
   </script>
 </body>
 </html>
