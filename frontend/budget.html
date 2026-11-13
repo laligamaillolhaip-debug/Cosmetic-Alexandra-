@@ -87,6 +87,13 @@
     }
 
     slider.oninput = () => setBudget(slider.value);
+
+    api("/api/meta/options").then(({ budget_presets }) => {
+      document.getElementById("presets").innerHTML = budget_presets.map(p => `
+        <button class="preset" data-range="${p.min}-${p.max}"
+          onclick="setBudget(${Math.round((p.min + p.max) / 2)})">${p.label}</button>`).join("");
+      setBudget(isEdit ? (Store.getBudget() || 4500) : 4500);
+    });
   </script>
 </body>
 </html>
