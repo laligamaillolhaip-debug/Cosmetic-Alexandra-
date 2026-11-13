@@ -384,6 +384,32 @@ input[type=range]::-moz-range-thumb{width:24px; height:24px; border:none; border
 }
 .section-title span{font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint);}
 
+/* ============ поиск и фильтры ============ */
+.search-bar{
+  display:flex; align-items:center; gap:12px;
+  border:1px solid var(--border); background:rgba(255,255,255,0.04);
+  padding:15px 19px; border-radius:var(--r-full);
+  color:var(--text-faint);
+  transition:all .2s var(--ease);
+}
+.search-bar:focus-within{border-color:rgba(59,158,255,0.45); background:rgba(59,158,255,0.06); box-shadow:0 0 0 4px rgba(59,158,255,0.08);}
+.search-bar svg{width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; flex:0 0 auto;}
+.search-bar input{background:none; border:none; outline:none; color:var(--text); font-family:inherit; font-size:14.5px; width:100%;}
+.search-bar input::placeholder{color:var(--text-faint);}
+
+.chip-row{display:flex; gap:9px; overflow-x:auto; padding:2px 0;}
+.filter-chip{
+  font-size:13px; font-weight:600; padding:10px 17px;
+  border:1px solid var(--border); background:rgba(255,255,255,0.03);
+  color:var(--text-muted); white-space:nowrap; border-radius:var(--r-full);
+  transition:all .18s var(--ease);
+}
+.filter-chip:hover{border-color:var(--border-strong); color:var(--text);}
+.filter-chip.active{
+  border-color:transparent; color:#04121F; background:var(--gradient);
+  box-shadow:var(--shadow-accent); font-weight:700;
+}
+
 /* ============ drag & drop ============ */
 .drag-handle{
   display:flex; align-items:center; justify-content:center;
