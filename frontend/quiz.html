@@ -59,6 +59,41 @@
       concerns: saved?.concerns ? [...saved.concerns] : [],
     };
     let meta = { skin_types: [], concerns: [] };
+
+    document.getElementById("backBtn").innerHTML = svg("back", 19);
+    document.getElementById("backBtn").onclick = prevStep;
+
+    function updateHead() {
+      document.getElementById("stepLabel").textContent = `Шаг ${step} из 2`;
+      document.getElementById("progressFill").style.width = step === 1 ? "50%" : "100%";
+      document.querySelectorAll(".quiz-step").forEach(s =>
+        s.classList.toggle("active", Number(s.dataset.step) === step));
+      updateFooter();
+    }
+
+    function updateFooter() {
+      const btn = document.getElementById("nextBtn");
+      const summary = document.getElementById("summary");
+      if (step === 1) {
+        btn.disabled = state.skin_types.length === 0;
+        btn.textContent = "ДАЛЕЕ";
+        const labels = state.skin_types
+          .map(id => meta.skin_types.find(o => o.id === id)?.label)
+          .filter(Boolean);
+        summary.textContent = labels.length ? `Выбрано: ${labels.join(" + ")}` : "Выбери хотя бы один вариант";
+      } else {
+        btn.disabled = false;
+        btn.textContent = "К БЮДЖЕТУ";
+        summary.textContent = state.concerns.length
+          ? `Отмечено: ${state.concerns.length}`
+          : "Можно пропустить, если ничего не беспокоит";
+      }
+    }
+
+    function prevStep() {
+      if (step === 1) { window.location.href = isEdit ? "profile.html" : "index.html"; return; }
+      step = 1; updateHead();
+    }
   </script>
 </body>
 </html>
