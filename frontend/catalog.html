@@ -39,5 +39,16 @@
     <div id="results" class="grid-cards"></div>
   </div>
 
+  <script src="js/api.js"></script>
+  <script>
+    const profileId = requireProfile();
+    renderTopbar("catalog.html");
+    document.getElementById("searchIcon").innerHTML = svg("search", 18);
+
+    let categories = [];
+    let activeCategory = "";
+    let inBudget = true;
+
+  </script>
 </body>
 </html>
