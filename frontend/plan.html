@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ядро — план ухода</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .budget-bar{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    padding:18px 22px; border-radius:var(--r-lg);
+    background:linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012));
+    border:1px solid var(--border); margin-bottom:22px;
+  }
+  .budget-bar .figures{display:flex; align-items:baseline; gap:9px;}
+  .budget-bar .spent{font-family:var(--font-mono); font-size:24px; font-variant-numeric:tabular-nums;}
+  .budget-bar .of{font-size:13px; color:var(--text-faint);}
+  .budget-meter{flex:1; min-width:170px; height:8px; background:rgba(255,255,255,0.08); border-radius:var(--r-full); overflow:hidden;}
+  .budget-meter i{display:block; height:100%; background:var(--gradient); border-radius:var(--r-full);}
+  .budget-left{font-size:13px; color:var(--success); font-weight:600; white-space:nowrap;}
+  .cat-head{
+    display:flex; align-items:center; gap:10px; margin:22px 0 12px;
+    font-size:12.5px; font-weight:700; color:var(--text-muted);
+    text-transform:uppercase; letter-spacing:0.09em;
+  }
+  .cat-head::after{content:''; flex:1; height:1px; background:var(--border);}
+  .fav-empty{
+    font-size:12.5px; color:var(--text-faint); line-height:1.55;
+    padding:20px 16px; text-align:center;
+    border:1.5px dashed var(--border); border-radius:var(--r-md);
+  }
+</style>
+</head>
+<body>
+  <div id="topbar" class="topbar"></div>
+
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Собрано под твою кожу</span>
+      <h1>Твой план ухода</h1>
+    </div>
+
+    <div class="budget-bar">
+      <div class="figures">
+        <span class="spent" id="spentVal">—</span>
+        <span class="of" id="budgetOf"></span>
+      </div>
+      <div class="budget-meter"><i id="budgetMeter" style="width:0%"></i></div>
+      <span class="budget-left" id="budgetLeft"></span>
+    </div>
+
+    <div id="aiAnalysis" class="ai-block" style="margin-bottom:24px;">
+      <div class="ai-label" id="aiLabel">Разбор ИИ</div>
+      <p id="aiAnalysisText">Анализируем твой профиль...</p>
+    </div>
+
+    <div class="plan-layout">
+      <div>
+        <div class="segmented" id="todTabs"></div>
+        <div id="planBody"></div>
+      </div>
+
+      <aside class="fav-panel">
+        <div class="fav-panel-head">
+          <h3 id="favTitle">Избранное</h3>
+          <span class="fav-count" id="favCount"></span>
+        </div>
+        <p class="fav-hint">Перетащи средство в план или нажми «+». Шаги внутри плана тоже можно менять местами за точки слева.</p>
+        <div class="fav-list" id="favList"></div>
+      </aside>
+    </div>
+  </div>
+
+</body>
+</html>
