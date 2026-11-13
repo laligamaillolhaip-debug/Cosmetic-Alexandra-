@@ -192,6 +192,31 @@
       renderPlan(); // перерисовываем, чтобы заголовки категорий встали по новому порядку
     };
 
+    async function loadPlan() {
+      planData = await api(`/api/plan/${profileId}`);
+      const { spent, budget } = planData;
+      document.getElementById("spentVal").textContent = fmtPrice(spent);
+      document.getElementById("budgetOf").textContent = `из ${fmtPrice(budget)}`;
+      document.getElementById("budgetMeter").style.width = Math.min(100, (spent / budget) * 100) + "%";
+      const left = budget - spent;
+      document.getElementById("budgetLeft").textContent =
+        left >= 0 ? `осталось ${fmtPrice(left)}` : `перерасход ${fmtPrice(-left)}`;
+      document.getElementById("budgetLeft").style.color = left >= 0 ? "var(--success)" : "var(--warning)";
+      renderPlan();
+    }
+
+    async function loadFavorites() {
+      const data = await api(`/api/favorites/${profileId}`);
+      favData = data.items;
+      Favorites.ids = new Set(data.ids);
+      renderFavorites();
+    }
+
+    loadPlan().catch(err => {
+      document.getElementById("planBody").innerHTML = `<p class="error-text">${err.message}</p>`;
+    });
+    loadFavorites();
+
   </script>
 </body>
 </html>
