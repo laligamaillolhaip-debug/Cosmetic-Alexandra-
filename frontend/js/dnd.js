@@ -100,4 +100,24 @@ const DnD = {
     }
   });
 
+  document.addEventListener("pointerup", (e) => {
+    const d = DnD._drag;
+    if (!d) return;
+
+    if (d.started) {
+      if (d.type === "plan") {
+        const list = d.source.closest("[data-drop-list]");
+        if (list && DnD.onReorder) {
+          const ids = [...list.querySelectorAll('[data-draggable="plan"]')]
+            .map(el => Number(el.dataset.itemId));
+          DnD.onReorder(list.dataset.tod, ids);
+        }
+      } else if (d.type === "fav" && d.dropZone && DnD.onAddToPlan) {
+        DnD.onAddToPlan(d.source.dataset.productId, d.dropZone.dataset.tod);
+      }
+    }
+    cleanup();
+  });
+
+  document.addEventListener("pointercancel", cleanup);
 })();
