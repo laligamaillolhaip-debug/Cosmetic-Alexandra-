@@ -310,6 +310,14 @@ input[type=range]::-moz-range-thumb{width:24px; height:24px; border:none; border
   background:var(--accent-soft); box-shadow:0 0 0 4px rgba(59,158,255,0.08);
 }
 
+/* ============ секции / заголовки блоков ============ */
+.section-title{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:13px;}
+.section-title h3{
+  font-size:12.5px; font-weight:700; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:0.09em;
+}
+.section-title span{font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint);}
+
 /* ============ состояния ============ */
 .empty-state{
   padding:44px 24px; text-align:center; color:var(--text-faint); font-size:13.5px;
