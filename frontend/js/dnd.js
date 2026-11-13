@@ -16,3 +16,24 @@ const DnD = {
   THRESHOLD: 6,
 };
 
+(function () {
+  function cleanup() {
+    const d = DnD._drag;
+    if (!d) return;
+    d.ghost?.remove();
+    d.source.classList.remove("dragging-source");
+    document.querySelectorAll(".drop-zone-active").forEach(el => el.classList.remove("drop-zone-active"));
+    document.body.style.userSelect = "";
+    DnD._drag = null;
+  }
+
+  function makeGhost(source, width) {
+    const ghost = source.cloneNode(true);
+    ghost.classList.add("drag-ghost");
+    ghost.style.width = width + "px";
+    ghost.style.margin = "0";
+    document.body.appendChild(ghost);
+    return ghost;
+  }
+
+})();
