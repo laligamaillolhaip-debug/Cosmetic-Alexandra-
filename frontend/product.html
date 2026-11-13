@@ -131,6 +131,16 @@
         btn.disabled = false;
       };
     }
+
+    Promise.all([
+      api(`/api/products/${productId}`),
+      Favorites.load(profileId),
+    ]).then(([data]) => {
+      render(data);
+      favBtn.classList.toggle("fav-active", Favorites.has(productId));
+    }).catch(err => {
+      document.getElementById("content").innerHTML = `<p class="error-text">${err.message}</p>`;
+    });
   </script>
 </body>
 </html>
