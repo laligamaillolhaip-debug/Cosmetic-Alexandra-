@@ -36,4 +36,25 @@ const DnD = {
     return ghost;
   }
 
+  document.addEventListener("pointerdown", (e) => {
+    const handle = e.target.closest("[data-drag-handle]");
+    if (!handle) return;
+    const source = handle.closest("[data-draggable]");
+    if (!source) return;
+
+    const rect = source.getBoundingClientRect();
+    DnD._drag = {
+      source,
+      handle,
+      type: source.dataset.draggable,
+      startX: e.clientX, startY: e.clientY,
+      offsetX: e.clientX - rect.left,
+      offsetY: e.clientY - rect.top,
+      width: rect.width,
+      started: false,
+      ghost: null,
+    };
+    handle.setPointerCapture(e.pointerId);
+  });
+
 })();
