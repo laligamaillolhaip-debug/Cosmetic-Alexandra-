@@ -94,6 +94,41 @@
           onclick="setBudget(${Math.round((p.min + p.max) / 2)})">${p.label}</button>`).join("");
       setBudget(isEdit ? (Store.getBudget() || 4500) : 4500);
     });
+
+    document.getElementById("submitBtn").onclick = async () => {
+      const quiz = Store.getQuiz();
+      if (!quiz || !quiz.skin_types || quiz.skin_types.length === 0) {
+        window.location.href = "quiz.html";
+        return;
+      }
+      const btn = document.getElementById("submitBtn");
+      const err = document.getElementById("err");
+      const original = btn.textContent;
+      btn.disabled = true; btn.textContent = "ПЕРЕСОБИРАЕМ ПЛАН...";
+      err.style.display = "none";
+      try {
+        const budget = Number(slider.value);
+        const payload = JSON.stringify({
+          skin_types: quiz.skin_types,
+          concerns: quiz.concerns,
+          budget_month: budget,
+        });
+
+        if (isEdit) {
+          // правим существующий профиль: избранное и календарь сохраняются
+          await api(`/api/profile/${Store.getProfileId()}`, { method: "PUT", body: payload });
+        } else {
+          const { profile_id } = await api("/api/profile", { method: "POST", body: payload });
+          Store.setProfileId(profile_id);
+        }
+        Store.setBudget(budget);
+        window.location.href = "plan.html";
+      } catch (e) {
+        err.textContent = "Не удалось собрать план: " + e.message;
+        err.style.display = "block";
+        btn.disabled = false; btn.textContent = original;
+      }
+    };
   </script>
 </body>
 </html>
