@@ -108,6 +108,35 @@
       el.classList.toggle("selected");
       updateFooter();
     }
+
+    api("/api/meta/options").then(data => {
+      meta = data;
+      document.getElementById("skinTypeOptions").innerHTML = data.skin_types.map(o => `
+        <div class="option-card" data-id="${o.id}">
+          <div><div class="opt-name">${o.label}</div><div class="opt-sub">${o.hint}</div></div>
+          <div class="tick">✓</div>
+        </div>`).join("");
+
+      document.getElementById("concernOptions").innerHTML = data.concerns.map(o => `
+        <div class="option-card" data-id="${o.id}">
+          <div class="opt-name">${o.label}</div>
+          <div class="tick">✓</div>
+        </div>`).join("");
+
+      document.querySelectorAll("#skinTypeOptions .option-card").forEach(el => {
+        if (state.skin_types.includes(el.dataset.id)) el.classList.add("selected");
+        el.onclick = () => toggle("skin_types", el.dataset.id, el);
+      });
+      document.querySelectorAll("#concernOptions .option-card").forEach(el => {
+        if (state.concerns.includes(el.dataset.id)) el.classList.add("selected");
+        el.onclick = () => toggle("concerns", el.dataset.id, el);
+      });
+
+      updateFooter();
+    }).catch(err => {
+      document.querySelector(".quiz-shell").innerHTML =
+        `<p class="error-text">Не удалось загрузить квиз: ${err.message}. Backend запущен?</p>`;
+    });
   </script>
 </body>
 </html>
