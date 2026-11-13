@@ -5,3 +5,9 @@ backend/app/data/app.db
 .venv/
 backend/app/data/http_cache/
 .$*.bkp
+.coverage
+.pytest_cache/
+htmlcov/
+.vscode/
+.mutmut-cache
+mutants/
