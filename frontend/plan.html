@@ -83,6 +83,17 @@
     document.getElementById("aiLabel").innerHTML = svg("sparkle", 14) + "Разбор ИИ";
     document.getElementById("favTitle").innerHTML = svg("heart", 18) + "Избранное";
 
+    document.getElementById("todTabs").innerHTML = `
+      <button class="seg active" data-tod="morning">${svg("sun", 16)}Утро</button>
+      <button class="seg" data-tod="evening">${svg("moon", 16)}Вечер</button>`;
+    document.querySelectorAll(".seg").forEach(btn => btn.onclick = () => setTod(btn.dataset.tod));
+
+    function setTod(tod) {
+      currentTod = tod;
+      document.querySelectorAll(".seg").forEach(s => s.classList.toggle("active", s.dataset.tod === tod));
+      renderPlan();
+    }
+
   </script>
 </body>
 </html>
