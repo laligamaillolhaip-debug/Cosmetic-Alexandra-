@@ -55,5 +55,20 @@
     </div>
   </div>
 
+  <script src="js/api.js"></script>
+  <script>
+    const slider = document.getElementById("budgetSlider");
+    const budgetVal = document.getElementById("budgetVal");
+    const isEdit = new URLSearchParams(location.search).get("edit") === "1";
+
+    document.getElementById("backBtn").innerHTML = svg("back", 19);
+    document.getElementById("backBtn").onclick = () =>
+      window.location.href = isEdit ? "profile.html" : "quiz.html";
+
+    if (isEdit) {
+      document.querySelector(".step-label").textContent = "Изменение бюджета";
+      document.getElementById("submitBtn").textContent = "СОХРАНИТЬ И ПЕРЕСОБРАТЬ ПЛАН";
+    }
+  </script>
 </body>
 </html>
