@@ -71,5 +71,18 @@
     </div>
   </div>
 
+  <script src="js/api.js"></script>
+  <script src="js/dnd.js"></script>
+  <script>
+    const profileId = requireProfile();
+    let currentTod = "morning";
+    let planData = null;
+    let favData = [];
+
+    renderTopbar("plan.html");
+    document.getElementById("aiLabel").innerHTML = svg("sparkle", 14) + "Разбор ИИ";
+    document.getElementById("favTitle").innerHTML = svg("heart", 18) + "Избранное";
+
+  </script>
 </body>
 </html>
