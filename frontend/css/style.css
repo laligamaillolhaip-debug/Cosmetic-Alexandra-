@@ -310,6 +310,42 @@ input[type=range]::-moz-range-thumb{width:24px; height:24px; border:none; border
   background:var(--accent-soft); box-shadow:0 0 0 4px rgba(59,158,255,0.08);
 }
 
+/* ============ продукты ============ */
+.thumb{
+  width:62px; height:62px; flex:0 0 auto;
+  border-radius:var(--r-md);
+  background:linear-gradient(145deg, rgba(59,158,255,0.16), rgba(34,211,238,0.06));
+  border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--accent);
+}
+.thumb svg{stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round;}
+.thumb.sm{width:46px; height:46px; border-radius:var(--r-sm);}
+
+.product-card{
+  display:flex; gap:15px; align-items:center;
+  padding:16px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.012));
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  transition:all .22s var(--ease);
+  color:var(--text);
+}
+.product-card:hover{
+  transform:translateY(-3px);
+  border-color:rgba(59,158,255,0.35);
+  box-shadow:var(--shadow-md), 0 0 0 4px rgba(59,158,255,0.06);
+}
+.product-info{flex:1; min-width:0; display:flex; flex-direction:column; gap:5px;}
+.product-name{font-size:14.5px; font-weight:700; line-height:1.35;}
+.product-brand{font-size:12px; color:var(--text-faint);}
+.product-meta{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:4px;}
+.price{
+  font-family:var(--font-mono); font-weight:500; font-size:15.5px;
+  font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--text);
+}
+.price-shop{font-size:11.5px; color:var(--text-faint);}
+
 /* ============ секции / заголовки блоков ============ */
 .section-title{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:13px;}
 .section-title h3{
