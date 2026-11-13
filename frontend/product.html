@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ядро — товар</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .product-page{max-width:680px; margin:0 auto; padding:20px 22px 40px; display:flex; flex-direction:column; gap:24px;}
+  #content{display:flex; flex-direction:column; gap:26px;}
+  .product-head{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .hero-visual{
+    height:230px; border-radius:var(--r-xl);
+    background:
+      radial-gradient(420px 220px at 50% 0%, rgba(59,158,255,0.22), transparent 70%),
+      linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+    border:1px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    color:var(--accent);
+  }
+  .title-row{display:flex; align-items:flex-start; justify-content:space-between; gap:16px;}
+  .actives-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .cta-stack{display:flex; flex-direction:column; gap:11px;}
+</style>
+</head>
+<body>
+  <div class="product-page">
+    <div class="product-head">
+      <button class="icon-btn" id="backBtn"></button>
+      <button class="icon-btn" id="favBtn" title="В избранное"></button>
+    </div>
+    <div id="content" class="loading">Загрузка...</div>
+  </div>
+
+  <nav id="appnav" class="appnav"></nav>
+
+</body>
+</html>
