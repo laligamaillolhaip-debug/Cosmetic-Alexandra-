@@ -68,6 +68,49 @@
       });
     }
 
+    async function load() {
+      const params = new URLSearchParams();
+      const q = document.getElementById("searchInput").value.trim();
+      if (q) params.set("query", q);
+      if (activeCategory) params.set("category", activeCategory);
+      if (inBudget) params.set("max_price", Store.getBudget() || 999999);
+
+      const results = document.getElementById("results");
+      results.innerHTML = Array.from({ length: 3 }, () => `<div class="skeleton"></div>`).join("");
+
+      const data = await api(`/api/products?${params.toString()}`);
+      if (!categories.length) { categories = data.categories; buildChips(); }
+
+      if (!data.items.length) {
+        results.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">Ничего не нашлось. Попробуй снять фильтр бюджета или другую категорию.</div>`;
+        return;
+      }
+
+      results.innerHTML = data.items.map(({ product, cheapest, shop_count }) => `
+        <div class="catalog-card fade-in">
+          <a class="product-card" href="product.html?id=${product.id}">
+            <div class="thumb">${svg(product.icon, 28)}</div>
+            <div class="product-info">
+              <div class="product-name">${product.name}</div>
+              <div class="product-brand">${product.brand} · ${product.volume_ml} мл</div>
+              <div class="product-meta">
+                <span class="price-shop">${cheapest.shop_name}${shop_count > 1 ? ` · ещё ${shop_count - 1}` : ""} ${sourceTag(cheapest)}</span>
+                ${priceHtml(cheapest)}
+              </div>
+            </div>
+          </a>
+          <button class="icon-btn fav-corner ${Favorites.has(product.id) ? "fav-active" : ""}"
+            data-fav="${product.id}" title="В избранное">${svg("heart", 18)}</button>
+        </div>`).join("");
+
+      results.querySelectorAll("[data-fav]").forEach(btn => {
+        btn.onclick = async () => {
+          const active = await Favorites.toggle(profileId, btn.dataset.fav);
+          btn.classList.toggle("fav-active", active);
+        };
+      });
+    }
+
   </script>
 </body>
 </html>
