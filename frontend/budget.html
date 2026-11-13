@@ -69,6 +69,24 @@
       document.querySelector(".step-label").textContent = "Изменение бюджета";
       document.getElementById("submitBtn").textContent = "СОХРАНИТЬ И ПЕРЕСОБРАТЬ ПЛАН";
     }
+
+    function paintSlider(v) {
+      const pct = ((v - slider.min) / (slider.max - slider.min)) * 100;
+      slider.style.background =
+        `linear-gradient(90deg, #3B9EFF 0%, #22D3EE ${pct}%, rgba(255,255,255,0.09) ${pct}%)`;
+    }
+
+    function setBudget(v) {
+      slider.value = v;
+      budgetVal.textContent = Number(v).toLocaleString("ru-RU");
+      paintSlider(v);
+      document.querySelectorAll(".preset").forEach(p => {
+        const [min, max] = p.dataset.range.split("-").map(Number);
+        p.classList.toggle("active", v >= min && v <= max);
+      });
+    }
+
+    slider.oninput = () => setBudget(slider.value);
   </script>
 </body>
 </html>
