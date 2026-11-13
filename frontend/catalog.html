@@ -49,6 +49,25 @@
     let activeCategory = "";
     let inBudget = true;
 
+    function buildChips() {
+      const budget = Store.getBudget();
+      const chips = [
+        { key: "__budget", label: `В бюджете · до ${fmtPrice(budget)}`, active: inBudget },
+        ...categories.map(([id, label]) => ({ key: id, label, active: activeCategory === id })),
+      ];
+      document.getElementById("chipRow").innerHTML = chips.map(c =>
+        `<button class="filter-chip ${c.active ? "active" : ""}" data-key="${c.key}">${c.label}</button>`).join("");
+      document.querySelectorAll(".filter-chip").forEach(btn => {
+        btn.onclick = () => {
+          const key = btn.dataset.key;
+          if (key === "__budget") inBudget = !inBudget;
+          else activeCategory = activeCategory === key ? "" : key;
+          buildChips();
+          load();
+        };
+      });
+    }
+
   </script>
 </body>
 </html>
