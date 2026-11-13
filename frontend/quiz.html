@@ -48,5 +48,17 @@
     </div>
   </div>
 
+  <script src="js/api.js"></script>
+  <script>
+    let step = 1;
+    const isEdit = new URLSearchParams(location.search).get("edit") === "1";
+    // в режиме правки подставляем текущие ответы, чтобы не выбирать всё заново
+    const saved = isEdit ? Store.getQuiz() : null;
+    const state = {
+      skin_types: saved?.skin_types ? [...saved.skin_types] : [],
+      concerns: saved?.concerns ? [...saved.concerns] : [],
+    };
+    let meta = { skin_types: [], concerns: [] };
+  </script>
 </body>
 </html>
