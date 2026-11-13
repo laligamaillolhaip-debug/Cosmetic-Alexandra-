@@ -34,5 +34,12 @@
 
   <nav id="appnav" class="appnav"></nav>
 
+  <script src="js/api.js"></script>
+  <script>
+    const profileId = requireProfile();
+    renderNav("catalog.html");
+    const productId = new URLSearchParams(location.search).get("id");
+
+  </script>
 </body>
 </html>
