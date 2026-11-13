@@ -57,4 +57,47 @@ const DnD = {
     handle.setPointerCapture(e.pointerId);
   });
 
+  document.addEventListener("pointermove", (e) => {
+    const d = DnD._drag;
+    if (!d) return;
+
+    if (!d.started) {
+      const dist = Math.hypot(e.clientX - d.startX, e.clientY - d.startY);
+      if (dist < DnD.THRESHOLD) return;
+      d.started = true;
+      d.ghost = makeGhost(d.source, d.width);
+      d.source.classList.add("dragging-source");
+      document.body.style.userSelect = "none";
+    }
+
+    d.ghost.style.left = (e.clientX - d.offsetX) + "px";
+    d.ghost.style.top = (e.clientY - d.offsetY) + "px";
+
+    if (d.type === "plan") {
+      // живая перестановка внутри своего списка
+      const list = d.source.closest("[data-drop-list]");
+      if (!list) return;
+      const siblings = [...list.querySelectorAll('[data-draggable="plan"]')].filter(el => el !== d.source);
+      let placed = false;
+      for (const sib of siblings) {
+        const r = sib.getBoundingClientRect();
+        if (e.clientY < r.top + r.height / 2) {
+          list.insertBefore(d.source, sib);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) list.appendChild(d.source);
+    } else if (d.type === "fav") {
+      // подсветка колонки плана, над которой держим
+      const under = document.elementFromPoint(e.clientX, e.clientY);
+      const zone = under?.closest("[data-drop-list]");
+      document.querySelectorAll(".drop-zone-active").forEach(el => {
+        if (el !== zone) el.classList.remove("drop-zone-active");
+      });
+      if (zone) zone.classList.add("drop-zone-active");
+      d.dropZone = zone || null;
+    }
+  });
+
 })();
