@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ядро — квиз о коже</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body{padding-bottom:0;}
+  .quiz-step{display:none; flex-direction:column; gap:20px;}
+  .quiz-step.active{display:flex; animation:fadeUp .35s var(--ease) both;}
+  .quiz-sub{color:var(--text-muted); font-size:14px; margin-top:6px;}
+  .quiz-footer{margin-top:auto; padding-top:24px; display:flex; flex-direction:column; gap:12px;}
+  .selected-summary{
+    font-size:12.5px; color:var(--text-faint); text-align:center;
+    font-family:var(--font-mono); min-height:18px;
+  }
+</style>
+</head>
+<body>
+  <div class="quiz-shell">
+    <div class="quiz-head">
+      <button class="icon-btn" id="backBtn"></button>
+      <span class="step-label" id="stepLabel">Шаг 1 из 2</span>
+      <span style="width:42px"></span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:50%"></div></div>
+
+    <div class="quiz-step active" data-step="1">
+      <div>
+        <h1>Какая у тебя кожа?</h1>
+        <p class="quiz-sub">Можно выбрать несколько — например, жирная и чувствительная одновременно. Это нормально, и подбор это учтёт.</p>
+      </div>
+      <div class="options" id="skinTypeOptions"></div>
+    </div>
+
+    <div class="quiz-step" data-step="2">
+      <div>
+        <h1>Что беспокоит?</h1>
+        <p class="quiz-sub">Отметь всё, что актуально — по этому подберём активные компоненты.</p>
+      </div>
+      <div class="options" id="concernOptions"></div>
+    </div>
+
+    <div class="quiz-footer">
+      <div class="selected-summary" id="summary"></div>
+      <button class="btn-primary" id="nextBtn" disabled>ДАЛЕЕ</button>
+    </div>
+  </div>
+
+</body>
+</html>
