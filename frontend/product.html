@@ -40,6 +40,16 @@
     renderNav("catalog.html");
     const productId = new URLSearchParams(location.search).get("id");
 
+    document.getElementById("backBtn").innerHTML = svg("back", 19);
+    document.getElementById("backBtn").onclick = () => history.back();
+
+    const favBtn = document.getElementById("favBtn");
+    favBtn.innerHTML = svg("heart", 19);
+    favBtn.onclick = async () => {
+      const active = await Favorites.toggle(profileId, productId);
+      favBtn.classList.toggle("fav-active", active);
+    };
+
   </script>
 </body>
 </html>
