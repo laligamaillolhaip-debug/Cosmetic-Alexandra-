@@ -94,6 +94,62 @@
       renderPlan();
     }
 
+    function renderPlan() {
+      const body = document.getElementById("planBody");
+      if (!planData) return;
+      const items = planData.plan[currentTod];
+
+      if (!items.length) {
+        body.innerHTML = `
+          <div class="plan-column" data-drop-list data-tod="${currentTod}">
+            <div class="empty-state">
+              Здесь пока пусто.<br>Перетащи сюда средство из избранного или добавь из каталога.
+            </div>
+          </div>`;
+        return;
+      }
+
+      // группируем по категориям, но порядок шагов сохраняем как в плане
+      let html = `<div class="plan-column" data-drop-list data-tod="${currentTod}">`;
+      let lastCategory = null;
+      items.forEach((item, i) => {
+        if (item.category_label !== lastCategory) {
+          html += `<div class="cat-head">${item.category_label}</div>`;
+          lastCategory = item.category_label;
+        }
+        html += planItemHtml(item, i + 1);
+      });
+      html += `</div>`;
+      body.innerHTML = html;
+
+      body.querySelectorAll("[data-remove-item]").forEach(btn => {
+        btn.onclick = async (e) => {
+          e.preventDefault(); e.stopPropagation();
+          await api(`/api/plan/${profileId}/items/${btn.dataset.removeItem}`, { method: "DELETE" });
+          await loadPlan();
+        };
+      });
+    }
+
+    function planItemHtml(item, num) {
+      const p = item.product;
+      return `
+        <div class="plan-item" data-draggable="plan" data-item-id="${item.item_id}">
+          <span class="drag-handle" data-drag-handle title="Перетащить">${svg("grip", 17)}</span>
+          <span class="step-num">${num}</span>
+          <div class="thumb sm">${svg(p.icon, 24)}</div>
+          <div class="product-info">
+            <a class="product-name" href="product.html?id=${p.id}">${p.name}</a>
+            <div class="product-brand">${p.brand}</div>
+            <div class="plan-reason">${item.reason}</div>
+          </div>
+          <div class="plan-actions">
+            ${priceHtml(item.price)}
+            <button class="mini-btn" data-remove-item="${item.item_id}" title="Убрать из плана">${svg("close", 15)}</button>
+          </div>
+        </div>`;
+    }
+
   </script>
 </body>
 </html>
