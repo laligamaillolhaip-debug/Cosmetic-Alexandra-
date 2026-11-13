@@ -150,6 +150,29 @@
         </div>`;
     }
 
+    function renderFavorites() {
+      const list = document.getElementById("favList");
+      document.getElementById("favCount").textContent = favData.length ? `${favData.length} шт.` : "";
+      if (!favData.length) {
+        list.innerHTML = `<div class="fav-empty">Пока ничего не добавлено.<br>Жми на сердечко в каталоге — средства появятся здесь.</div>`;
+        return;
+      }
+      list.innerHTML = favData.map(({ product, price }) => `
+        <div class="fav-item" data-draggable="fav" data-product-id="${product.id}">
+          <span class="drag-handle" data-drag-handle title="Перетащить в план">${svg("grip", 16)}</span>
+          <div class="thumb sm" style="width:40px;height:40px;">${svg(product.icon, 20)}</div>
+          <div style="flex:1; min-width:0;">
+            <div class="fav-name">${product.name}</div>
+            <div class="fav-price">${price ? fmtPrice(price.price) : "—"}</div>
+          </div>
+          <button class="mini-btn add" data-add="${product.id}" title="Добавить в план">${svg("plus", 15)}</button>
+        </div>`).join("");
+
+      list.querySelectorAll("[data-add]").forEach(btn => {
+        btn.onclick = () => addToPlan(btn.dataset.add, currentTod);
+      });
+    }
+
   </script>
 </body>
 </html>
