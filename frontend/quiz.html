@@ -94,6 +94,20 @@
       if (step === 1) { window.location.href = isEdit ? "profile.html" : "index.html"; return; }
       step = 1; updateHead();
     }
+
+    document.getElementById("nextBtn").onclick = () => {
+      if (step === 1) { step = 2; updateHead(); return; }
+      Store.setQuiz(state);
+      window.location.href = isEdit ? "budget.html?edit=1" : "budget.html";
+    };
+
+    function toggle(listName, id, el) {
+      const list = state[listName];
+      const idx = list.indexOf(id);
+      if (idx >= 0) list.splice(idx, 1); else list.push(id);
+      el.classList.toggle("selected");
+      updateFooter();
+    }
   </script>
 </body>
 </html>
