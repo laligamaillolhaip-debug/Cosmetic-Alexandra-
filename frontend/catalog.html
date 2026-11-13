@@ -111,6 +111,12 @@
       });
     }
 
+    let debounce;
+    document.getElementById("searchInput").oninput = () => {
+      clearTimeout(debounce);
+      debounce = setTimeout(load, 250);
+    };
+
   </script>
 </body>
 </html>
