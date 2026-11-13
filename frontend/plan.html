@@ -217,6 +217,19 @@
     });
     loadFavorites();
 
+    const analysisSlot = document.getElementById("aiAnalysisText");
+    const stopThinking = showThinking(analysisSlot, "Разбираю твой профиль");
+
+    api(`/api/profile/${profileId}/analysis`, { method: "POST" }).then(({ analysis, error }) => {
+      stopThinking();
+      const block = document.getElementById("aiAnalysis");
+      if (!analysis) block.classList.add("muted");
+      analysisSlot.textContent = analysis || error || "Нет ответа от ИИ.";
+    }).catch(err => {
+      stopThinking();
+      document.getElementById("aiAnalysis").classList.add("muted");
+      analysisSlot.textContent = "ИИ недоступен: " + err.message;
+    });
   </script>
 </body>
 </html>
