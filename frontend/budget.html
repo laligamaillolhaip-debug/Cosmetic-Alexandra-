@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ядро — бюджет</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body{padding-bottom:0;}
+  .quiz-sub{color:var(--text-muted); font-size:14px; margin-top:6px;}
+  .budget-card{
+    padding:28px 24px; border-radius:var(--r-xl);
+    background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+    border:1px solid var(--border);
+    box-shadow:var(--shadow-md);
+    display:flex; flex-direction:column; gap:22px;
+  }
+  .quiz-footer{margin-top:auto; padding-top:24px; display:flex; flex-direction:column; gap:12px;}
+</style>
+</head>
+<body>
+  <div class="quiz-shell">
+    <div class="quiz-head">
+      <button class="icon-btn" id="backBtn"></button>
+      <span class="step-label">Финальный шаг</span>
+      <span style="width:42px"></span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+
+    <div>
+      <h1>Сколько готов тратить в месяц?</h1>
+      <p class="quiz-sub">Учитываем расход средств и то, как часто их придётся докупать.</p>
+    </div>
+
+    <div class="budget-card">
+      <div class="budget-display">
+        <span id="budgetVal">4 500</span> ₽
+        <span class="budget-unit">в месяц на весь уход</span>
+      </div>
+
+      <div>
+        <input type="range" id="budgetSlider" min="1000" max="20000" step="100" value="4500">
+        <div class="slider-minmax"><span>1 000 ₽</span><span>20 000 ₽</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title"><h3>Быстрый выбор</h3></div>
+      <div class="preset-grid" id="presets"></div>
+    </div>
+
+    <div class="quiz-footer">
+      <p class="error-text" id="err" style="display:none;"></p>
+      <button class="btn-primary" id="submitBtn">СОБРАТЬ ПЛАН</button>
+    </div>
+  </div>
+
+</body>
+</html>
