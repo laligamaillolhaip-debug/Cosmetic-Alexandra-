@@ -310,7 +310,7 @@ PRODUCTS = [
 
 def seed_all(conn):
     for p in PRODUCTS:
-        shops = p.pop("shops")
+        shops = p.pop("shops", {})
         conn.execute(
             """INSERT INTO products
                (id, name, brand, category, volume_ml, time_of_day, skin_types, concerns, actives, description, popularity, icon)
