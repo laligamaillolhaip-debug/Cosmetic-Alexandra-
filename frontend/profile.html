@@ -58,6 +58,111 @@
   <script>
     const profileId = requireProfile();
     renderTopbar("profile.html");
+
+    function render(p) {
+      document.getElementById("body").classList.remove("loading");
+      const skin = p.skin_types.map(s => `<span class="tag">${SKIN_TYPE_LABELS[s] || s}</span>`).join("");
+      const concerns = p.concerns.length
+        ? p.concerns.map(c => `<span class="tag plain">${CONCERN_LABELS[c] || c}</span>`).join("")
+        : `<span class="note">Ничего не отмечено</span>`;
+
+      document.getElementById("body").innerHTML = `
+        <div class="profile-grid">
+          <div class="panel">
+            <h2>${svg("user", 19)}Ответы опросника</h2>
+
+            <div class="field">
+              <span class="field-label">Тип кожи</span>
+              <div class="tag-row">${skin}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Что беспокоит</span>
+              <div class="tag-row">${concerns}</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Бюджет в месяц</span>
+              <div class="budget-line"><b>${fmtPrice(p.budget_month)}</b></div>
+            </div>
+
+            <p class="note">Ошибся при заполнении или кожа изменилась? Пройди опросник заново — план пересоберётся, а избранное и отметки в календаре останутся.</p>
+
+            <div class="action-list">
+              <button class="btn-primary" id="redoQuiz">${svg("edit", 17)}Пройти опросник заново</button>
+              <button class="btn-ghost" id="editBudget">${svg("wallet", 17)}Изменить только бюджет</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>${svg("plan", 19)}Статистика</h2>
+            <div class="stat-grid">
+              <div class="stat"><b>${p.stats.plan_items}</b><span>средств в плане</span></div>
+              <div class="stat"><b>${p.stats.favorites}</b><span>в избранном</span></div>
+              <div class="stat"><b>${p.stats.done_steps}</b><span>шагов выполнено</span></div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Аккаунт</span>
+              <div class="tag-row">
+                <span class="tag plain" id="userEmail">—</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Нейросеть</span>
+              <div id="aiStatus" class="ai-status"><span class="led"></span>проверяем связь...</div>
+            </div>
+
+            <div class="field">
+              <span class="field-label">Разбор кожи от ИИ</span>
+              <p class="note" id="analysisText">${p.analysis ? "" : "Появится на странице плана после первого захода."}</p>
+            </div>
+
+            <div class="action-list" style="margin-top:auto;">
+              <button class="btn-ghost" id="logoutAll">${svg("logout", 17)}Выйти из аккаунта</button>
+              <button class="btn-ghost danger-btn" id="resetAll">${svg("reset", 17)}Начать заново с нуля</button>
+              <p class="note">Выход завершит сессию на этом устройстве. «Начать заново» сбрасывает ответы опроса — аккаунт и почта сохраняются.</p>
+            </div>
+          </div>
+        </div>`;
+
+      // разбор кожи вставляем текстом, а не в разметку
+      if (p.analysis) document.getElementById("analysisText").textContent = p.analysis;
+
+      document.getElementById("userEmail").textContent = Store.getEmail() || "—";
+      document.getElementById("logoutAll").onclick = () => Auth.logout();
+
+      api("/api/meta/ai-status").then(s => {
+        const el = document.getElementById("aiStatus");
+        el.classList.add(s.ok ? "online" : "offline");
+        const where = s.provider === "local" ? "локальная модель" : "облачный Claude";
+        el.innerHTML = `<span class="led"></span>${s.ok ? where : "нет связи"} · <code>${s.model}</code>`;
+        el.title = s.detail;
+      }).catch(() => {
+        const el = document.getElementById("aiStatus");
+        el.classList.add("offline");
+        el.innerHTML = `<span class="led"></span>статус неизвестен`;
+      });
+
+      document.getElementById("redoQuiz").onclick = () => {
+        Store.setQuiz({ skin_types: [...p.skin_types], concerns: [...p.concerns] });
+        window.location.href = "quiz.html?edit=1";
+      };
+      document.getElementById("editBudget").onclick = () => {
+        Store.setQuiz({ skin_types: [...p.skin_types], concerns: [...p.concerns] });
+        window.location.href = "budget.html?edit=1";
+      };
+      document.getElementById("resetAll").onclick = () => {
+        if (!confirm("Пройти всё заново? Ответы опроса, план и избранное сбросятся, аккаунт останется.")) return;
+        localStorage.removeItem("yadro_quiz");
+        window.location.href = "quiz.html";
+      };
+    }
+
+    api(`/api/profile/${profileId}`).then(render).catch(err => {
+      document.getElementById("body").innerHTML = `<p class="error-text">${err.message}</p>`;
+    });
   </script>
 </body>
 </html>
