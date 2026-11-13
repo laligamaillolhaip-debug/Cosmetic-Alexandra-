@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ядро — каталог</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .filters{display:flex; flex-direction:column; gap:14px; margin-bottom:26px;}
+  .catalog-card{position:relative;}
+  .catalog-card .fav-corner{position:absolute; top:12px; right:12px;}
+  .catalog-card .product-card{padding-right:58px;}
+</style>
+</head>
+<body>
+  <div id="topbar" class="topbar"></div>
+
+  <div class="container">
+    <div class="page-head">
+      <span class="eyebrow">Цены из нескольких магазинов</span>
+      <h1>Каталог</h1>
+    </div>
+
+    <div class="filters">
+      <div class="search-bar">
+        <span id="searchIcon"></span>
+        <input type="text" id="searchInput" placeholder="Поиск средства или бренда">
+      </div>
+      <div class="chip-row no-scrollbar" id="chipRow"></div>
+    </div>
+
+    <div class="source-legend">
+      <span>Откуда цена:</span>
+      <span class="item"><span class="swatch" style="background:var(--accent)"></span>живая, собрана с магазина</span>
+      <span class="item"><span class="swatch" style="background:var(--success)"></span>из партнёрского фида</span>
+      <span class="item"><span class="swatch" style="background:var(--text-faint)"></span>референсная по рынку</span>
+    </div>
+
+    <div id="results" class="grid-cards"></div>
+  </div>
+
+</body>
+</html>
