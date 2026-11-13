@@ -173,6 +173,25 @@
       });
     }
 
+    async function addToPlan(productId, tod) {
+      await api(`/api/plan/${profileId}/items`, {
+        method: "POST",
+        body: JSON.stringify({ product_id: productId, time_of_day: tod }),
+      });
+      await loadPlan();
+    }
+
+    DnD.onAddToPlan = (productId, tod) => addToPlan(productId, tod);
+    DnD.onReorder = async (tod, itemIds) => {
+      await api(`/api/plan/${profileId}/reorder`, {
+        method: "POST",
+        body: JSON.stringify({ time_of_day: tod, item_ids: itemIds }),
+      });
+      const byId = new Map(planData.plan[tod].map(i => [i.item_id, i]));
+      planData.plan[tod] = itemIds.map(id => byId.get(id)).filter(Boolean);
+      renderPlan(); // перерисовываем, чтобы заголовки категорий встали по новому порядку
+    };
+
   </script>
 </body>
 </html>
