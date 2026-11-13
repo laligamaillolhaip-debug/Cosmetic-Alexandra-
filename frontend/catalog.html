@@ -117,6 +117,11 @@
       debounce = setTimeout(load, 250);
     };
 
+    Favorites.load(profileId)
+      .then(load)
+      .catch(err => {
+        document.getElementById("results").innerHTML = `<p class="error-text">${err.message}</p>`;
+      });
   </script>
 </body>
 </html>
