@@ -50,6 +50,28 @@
       return div;
     }
 
+    async function sendMessage(text) {
+      const input = document.getElementById("chatInput");
+      const value = (text ?? input.value).trim();
+      if (!value) return;
+      input.value = "";
+      appendMsg("user", value);
+      const pending = appendMsg("assistant", "");
+      const stopThinking = showThinking(pending, "Модель думает");
+      try {
+        const { reply } = await api(`/api/chat/${profileId}`, {
+          method: "POST",
+          body: JSON.stringify({ message: value }),
+        });
+        stopThinking();
+        pending.textContent = reply;
+      } catch (err) {
+        stopThinking();
+        pending.textContent = "ИИ недоступен: " + err.message;
+      }
+      document.getElementById("chatArea").scrollTop = document.getElementById("chatArea").scrollHeight;
+    }
+
 </script>
 </body>
 </html>
