@@ -40,6 +40,18 @@
     renderTopbar("chat.html");
     document.getElementById("sendBtn").innerHTML = svg("send", 19);
 
+    const suggestions = [
+      "Почему выбрана именно эта сыворотка?",
+      "Есть аналог дешевле?",
+      "Что делать с раздражением после бритья?",
+      "Собери план подешевле",
+    ];
+    document.getElementById("suggestRow").innerHTML = suggestions
+      .map(s => `<button class="suggest-chip" data-text="${s}">${s}</button>`).join("");
+    document.querySelectorAll(".suggest-chip").forEach(btn => {
+      btn.onclick = () => sendMessage(btn.dataset.text);
+    });
+
     function appendMsg(role, text) {
       const area = document.getElementById("chatArea");
       const div = document.createElement("div");
@@ -71,6 +83,11 @@
       }
       document.getElementById("chatArea").scrollTop = document.getElementById("chatArea").scrollHeight;
     }
+
+    document.getElementById("sendBtn").onclick = () => sendMessage();
+    document.getElementById("chatInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") sendMessage();
+    });
 
 </script>
 </body>
