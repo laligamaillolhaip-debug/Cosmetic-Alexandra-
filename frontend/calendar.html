@@ -42,6 +42,45 @@
   </div>
 
   <script src="js/api.js"></script>
-  <script></script>
+  <script>
+    const profileId = requireProfile();
+    renderTopbar("calendar.html");
+    document.getElementById("progressIcon").innerHTML = svg("plan", 22);
+
+    let currentTod = "morning";
+    let selectedDate = new Date().toLocaleDateString("sv-SE");
+    let dayData = null;
+
+    document.getElementById("todTabs").innerHTML = `
+      <button class="seg active" data-tod="morning">${svg("sun", 16)}Утро</button>
+      <button class="seg" data-tod="evening">${svg("moon", 16)}Вечер</button>`;
+    document.querySelectorAll(".seg").forEach(btn => btn.onclick = () => setTod(btn.dataset.tod));
+
+    function buildDateStrip() {
+      const dow = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+      const today = new Date();
+      const cells = [];
+      for (let i = -3; i <= 3; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const iso = d.toLocaleDateString("sv-SE");
+        cells.push(`
+          <button class="date-cell ${iso === selectedDate ? "today" : ""}" data-date="${iso}">
+            <span class="dow">${dow[d.getDay()]}</span>${d.getDate()}
+          </button>`);
+      }
+      document.getElementById("dateStrip").innerHTML = cells.join("");
+      document.querySelectorAll(".date-cell").forEach(btn => {
+        btn.onclick = () => { selectedDate = btn.dataset.date; buildDateStrip(); loadDay(); };
+      });
+    }
+
+    function setTod(tod) {
+      currentTod = tod;
+      document.querySelectorAll(".seg").forEach(s => s.classList.toggle("active", s.dataset.tod === tod));
+      renderChecklist();
+    }
+
+</script>
 </body>
 </html>
