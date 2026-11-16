@@ -35,6 +35,21 @@
   </div>
 
   <script src="js/api.js"></script>
-  <script></script>
+  <script>
+    const profileId = requireProfile();
+    renderTopbar("chat.html");
+    document.getElementById("sendBtn").innerHTML = svg("send", 19);
+
+    function appendMsg(role, text) {
+      const area = document.getElementById("chatArea");
+      const div = document.createElement("div");
+      div.className = `msg ${role === "user" ? "me" : "ai"} fade-in`;
+      div.textContent = text;
+      area.appendChild(div);
+      area.scrollTop = area.scrollHeight;
+      return div;
+    }
+
+</script>
 </body>
 </html>
