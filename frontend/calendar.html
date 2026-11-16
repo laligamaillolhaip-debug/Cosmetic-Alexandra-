@@ -81,6 +81,31 @@
       renderChecklist();
     }
 
+    function renderChecklist() {
+      const el = document.getElementById("checklist");
+      if (!dayData) return;
+      const items = dayData.checklist[currentTod];
+      const done = items.filter(i => i.done).length;
+      document.getElementById("progressVal").textContent = `${done} / ${items.length}`;
+
+      if (!items.length) {
+        el.innerHTML = `<div class="empty-state">На этот блок ничего не запланировано.<br>Добавь средства в план.</div>`;
+        return;
+      }
+      el.innerHTML = items.map(({ product, done }) => `
+        <div class="checklist-row ${done ? "is-done" : ""}">
+          <button class="check ${done ? "done" : ""}" data-toggle="${product.id}" data-done="${!done}">✓</button>
+          <div>
+            <div class="checklist-name ${done ? "done" : ""}">${product.name}</div>
+            <div class="checklist-sub">${product.brand}</div>
+          </div>
+        </div>`).join("");
+
+      el.querySelectorAll("[data-toggle]").forEach(btn => {
+        btn.onclick = () => toggle(btn.dataset.toggle, btn.dataset.done === "true");
+      });
+    }
+
 </script>
 </body>
 </html>
