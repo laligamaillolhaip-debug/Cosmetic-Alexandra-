@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ядро — ассистент</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .chat-shell{
+    max-width:720px; margin:0 auto; padding:0 22px 10px;
+    display:flex; flex-direction:column;
+    height:calc(100dvh - 330px); min-height:320px;
+  }
+  #chatArea{flex:1; overflow-y:auto; padding:6px 4px 10px;}
+  @media (min-width:900px){ .chat-shell{height:calc(100dvh - 240px);} }
+</style>
+</head>
+<body>
+  <div id="topbar" class="topbar"></div>
+
+  <div class="container">
+    <div class="page-head" style="padding-bottom:14px;">
+      <span class="eyebrow">Знает твой профиль и план</span>
+      <h1>ИИ-ассистент</h1>
+    </div>
+  </div>
+
+  <div class="chat-shell">
+    <div id="chatArea" class="chat-area"></div>
+    <div class="chip-row no-scrollbar" id="suggestRow" style="margin-top:10px;"></div>
+    <div class="chat-input-row">
+      <input type="text" id="chatInput" placeholder="Спросить об уходе...">
+      <button class="send-btn" id="sendBtn"></button>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script></script>
+</body>
+</html>
