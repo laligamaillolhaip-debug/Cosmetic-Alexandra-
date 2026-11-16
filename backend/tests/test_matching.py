@@ -72,7 +72,6 @@ def test_is_harsh(active_name, expected):
     assert is_harsh(product) is expected
 
 
-@pytest.mark.xfail(reason="Дефект D-02: слово 'кислота' в HARSH_MARKERS ловит безопасную гиалуроновую кислоту")
 def test_is_harsh_hyaluronic_acid_bug():
     product = make_product(actives=["гиалуроновая кислота"])
     # Ожидаем, что она НЕ агрессивна (по ТЗ)

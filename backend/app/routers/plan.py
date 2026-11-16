@@ -1,8 +1,14 @@
+import json
+import uuid
+from datetime import datetime, timezone, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..database import get_db, row_to_dict
 from ..schemas import PlanItemIn, ReorderIn
-from ..services import auth
+from ..services import auth, ai, ai_planner
+from .products import load_products_with_prices
+from .profile import save_plan
 from ..services.matching import CATEGORY_LABELS
 
 router = APIRouter(prefix="/api/plan", tags=["plan"])
@@ -67,6 +73,7 @@ def add_item(payload: PlanItemIn, profile_id: str = Depends(auth.require_profile
             (profile_id, payload.time_of_day),
         ).fetchone()["m"]
 
+        conn.execute("UPDATE profiles SET plan_source='edited', plan_summary=NULL WHERE id=?", (profile_id,))
         cur = conn.execute(
             """INSERT INTO plan_items (profile_id, product_id, time_of_day, step_order, badge, reason)
                VALUES (?,?,?,?,?,?)""",
@@ -79,6 +86,7 @@ def add_item(payload: PlanItemIn, profile_id: str = Depends(auth.require_profile
 @router.delete("/{profile_id}/items/{item_id}")
 def remove_item(item_id: int, profile_id: str = Depends(auth.require_profile_access)):
     with get_db() as conn:
+        conn.execute("UPDATE profiles SET plan_source='edited', plan_summary=NULL WHERE id=?", (profile_id,))
         conn.execute("DELETE FROM plan_items WHERE profile_id=? AND id=?", (profile_id, item_id))
     return {"ok": True}
 
@@ -86,9 +94,83 @@ def remove_item(item_id: int, profile_id: str = Depends(auth.require_profile_acc
 @router.post("/{profile_id}/reorder")
 def reorder(payload: ReorderIn, profile_id: str = Depends(auth.require_profile_access)):
     with get_db() as conn:
+        conn.execute("UPDATE profiles SET plan_source='edited', plan_summary=NULL WHERE id=?", (profile_id,))
         for order, item_id in enumerate(payload.item_ids):
             conn.execute(
                 "UPDATE plan_items SET step_order=? WHERE profile_id=? AND id=? AND time_of_day=?",
                 (order, profile_id, item_id, payload.time_of_day),
             )
+    return {"ok": True}
+
+
+@router.post("/{profile_id}/ai-draft")
+def create_ai_draft(profile_id: str = Depends(auth.require_profile_access)):
+    with get_db() as conn:
+        profile = row_to_dict(conn.execute("SELECT * FROM profiles WHERE id=?", (profile_id,)).fetchone())
+        products, prices = load_products_with_prices(conn)
+        stamp = ai_planner.fingerprint(conn, profile, products, prices)
+    try:
+        result = ai_planner.generate(profile, products, prices)
+    except ai.AIUnavailable as exc:
+        raise HTTPException(503, str(exc)) from exc
+    except ai_planner.InvalidPlan as exc:
+        raise HTTPException(422, str(exc)) from exc
+    draft_id = str(uuid.uuid4())
+    model = ai.ANTHROPIC_MODEL if ai.PROVIDER == "anthropic" else ai.LOCAL_MODEL
+    now = datetime.now(timezone.utc)
+    with get_db() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        latest = row_to_dict(conn.execute("SELECT * FROM profiles WHERE id=?", (profile_id,)).fetchone())
+        current_products, current_prices = load_products_with_prices(conn)
+        if stamp != ai_planner.fingerprint(conn, latest, current_products, current_prices):
+            raise HTTPException(409, "Профиль, каталог или план изменились во время подбора. Запусти подбор ещё раз.")
+        conn.execute("DELETE FROM plan_drafts WHERE profile_id=?", (profile_id,))
+        conn.execute("INSERT INTO plan_drafts (id,profile_id,selection_json,fingerprint,model,created_at) VALUES (?,?,?,?,?,?)",
+                     (draft_id, profile_id, json.dumps(ai_planner.selection_from_result(result), ensure_ascii=False), stamp, model, now.isoformat()))
+    return {**result, "draft_id": draft_id}
+
+
+@router.post("/{profile_id}/ai-draft/{draft_id}/apply")
+def apply_ai_draft(draft_id: str, profile_id: str = Depends(auth.require_profile_access)):
+    with get_db() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        draft = conn.execute("SELECT * FROM plan_drafts WHERE id=? AND profile_id=?", (draft_id, profile_id)).fetchone()
+        if not draft:
+            raise HTTPException(404, "Предложение не найдено. Выполни новый подбор.")
+        if datetime.now(timezone.utc) - datetime.fromisoformat(draft["created_at"]) > timedelta(minutes=30):
+            raise HTTPException(409, "Предложение устарело. Выполни новый подбор.")
+        profile = row_to_dict(conn.execute("SELECT * FROM profiles WHERE id=?", (profile_id,)).fetchone())
+        products, prices = load_products_with_prices(conn)
+        if draft["fingerprint"] != ai_planner.fingerprint(conn, profile, products, prices):
+            raise HTTPException(409, "Профиль, каталог или текущий план изменились. Нужен новый подбор.")
+        try:
+            result = ai_planner.validate_selection(json.loads(draft["selection_json"]), profile, ai_planner.candidates(profile, products, prices))
+        except ai_planner.InvalidPlan as exc:
+            raise HTTPException(409, "Предложение больше не подходит: " + str(exc)) from exc
+        save_plan(conn, profile_id, result["plan"], source="ai", summary=result["summary"], model=draft["model"])
+        conn.execute("DELETE FROM plan_drafts WHERE profile_id=?", (profile_id,))
+    return get_plan(profile_id)
+
+
+@router.get("/{profile_id}/ai-draft")
+def latest_ai_draft(profile_id: str = Depends(auth.require_profile_access)):
+    with get_db() as conn:
+        draft = conn.execute("SELECT * FROM plan_drafts WHERE profile_id=? ORDER BY created_at DESC LIMIT 1", (profile_id,)).fetchone()
+        if not draft or datetime.now(timezone.utc) - datetime.fromisoformat(draft["created_at"]) > timedelta(minutes=30):
+            return {"draft": None}
+        profile = row_to_dict(conn.execute("SELECT * FROM profiles WHERE id=?", (profile_id,)).fetchone())
+        products, prices = load_products_with_prices(conn)
+        if draft["fingerprint"] != ai_planner.fingerprint(conn, profile, products, prices):
+            return {"draft": None}
+        try:
+            result = ai_planner.validate_selection(json.loads(draft["selection_json"]), profile, ai_planner.candidates(profile, products, prices))
+        except ai_planner.InvalidPlan:
+            return {"draft": None}
+        return {"draft": {**result, "draft_id": draft["id"]}}
+
+
+@router.delete("/{profile_id}/ai-draft/{draft_id}")
+def dismiss_ai_draft(draft_id: str, profile_id: str = Depends(auth.require_profile_access)):
+    with get_db() as conn:
+        conn.execute("DELETE FROM plan_drafts WHERE id=? AND profile_id=?", (draft_id, profile_id))
     return {"ok": True}

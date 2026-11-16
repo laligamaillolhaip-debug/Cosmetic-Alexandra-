@@ -44,7 +44,7 @@ REUSE_BONUS = 1.5
 APPLICATION_ORDER = ["cleanser", "toner", "exfoliant", "serum", "eye", "moisturizer", "spf", "mask", "balm"]
 
 # Компоненты, которые для чувствительной кожи — риск, а не плюс.
-HARSH_MARKERS = ("ретинол", "кислота", "aha", "bha", "lha", "бензоил")
+HARSH_MARKERS = ("ретин", "retin", "салицил", "salicylic", "гликолев", "glycolic", "молочн", "lactic", "миндальн", "mandelic", "азелаин", "azelaic", "aha", "bha", "lha", "бензоил", "benzoyl")
 
 
 def cheapest_price(prices: list[dict]) -> dict | None:

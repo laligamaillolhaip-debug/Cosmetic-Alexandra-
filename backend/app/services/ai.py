@@ -1,21 +1,9 @@
 """
-Слой работы с нейросетью. Поддерживает два провайдера:
-
-  local      — локальная модель через LM Studio (по умолчанию).
-               Бесплатно, работает офлайн, ключи не нужны.
-  anthropic  — облачный Claude, если понадобится качество получше.
-
-Провайдер выбирается в .env через AI_PROVIDER.
-
-Особенности локального эндпоинта LM Studio (/api/v1/chat), проверено вживую:
-  • запрос: {"model", "system_prompt", "input", "temperature"};
-  • max_tokens НЕ поддерживается — длину ответа сдерживаем промптом;
-  • диалог одноходовый: массив сообщений не принимается, поэтому историю
-    переписки складываем в текст запроса;
-  • ответ приходит массивом output, где рассуждения модели (type="reasoning")
-    лежат отдельно от ответа (type="message") — пользователю нужен только
-    второй, рассуждения мы отбрасываем;
-  • thinking-модель отвечает 8-15 секунд, поэтому таймаут большой.
+Нейросеть через LM Studio или Anthropic.
+Текстовые ответы идут через native /api/v1/chat с max_output_tokens;
+план — через /v1/chat/completions с JSON Schema и отдельным лимитом
+8192 токена, включающим рассуждения thinking-модели. Рассуждения не
+показываются в интерфейсе. Итоговый план проверяется в ai_planner.py.
 """
 from __future__ import annotations
 
@@ -75,6 +63,9 @@ def _local_complete(system: str, prompt: str) -> str:
         "system_prompt": system,
         "input": prompt,
         "temperature": 0.4,
+        "max_output_tokens": 2048,
+        "context_length": 8192,
+        "store": False,
     }
     try:
         with httpx.Client(timeout=LOCAL_TIMEOUT) as client:
@@ -101,7 +92,7 @@ def _local_complete(system: str, prompt: str) -> str:
     return message
 
 
-def _anthropic_complete(system: str, prompt: str) -> str:
+def _anthropic_complete(system: str, prompt: str, max_tokens: int = 400) -> str:
     key = os.getenv("ANTHROPIC_API_KEY")
     if not key or key.startswith("sk-ant-..."):
         raise AIUnavailable(
@@ -116,7 +107,7 @@ def _anthropic_complete(system: str, prompt: str) -> str:
     try:
         resp = Anthropic(api_key=key).messages.create(
             model=ANTHROPIC_MODEL,
-            max_tokens=400,
+            max_tokens=max_tokens,
             system=system,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -125,9 +116,9 @@ def _anthropic_complete(system: str, prompt: str) -> str:
     return "".join(b.text for b in resp.content if b.type == "text").strip()
 
 
-def complete(prompt: str, system: str = SYSTEM_PROMPT) -> str:
+def complete(prompt: str, system: str = SYSTEM_PROMPT, max_tokens: int = 400) -> str:
     if PROVIDER == "anthropic":
-        return _anthropic_complete(system, prompt)
+        return _anthropic_complete(system, prompt, max_tokens=max_tokens)
     return _local_complete(system, prompt)
 
 
@@ -145,10 +136,10 @@ def status() -> dict:
         with httpx.Client(timeout=5) as client:
             resp = client.get(LOCAL_URL.replace("/chat", "/models"))
         loaded = [m.get("key") for m in resp.json().get("models", [])]
-        ok = resp.status_code == 200
+        ok = resp.status_code == 200 and LOCAL_MODEL in loaded
         info.update(ok=ok, loaded_models=loaded,
                     detail="Локальная модель на связи" if ok else f"Ответ {resp.status_code}")
-    except httpx.HTTPError:
+    except (httpx.HTTPError, ValueError, TypeError):
         info.update(ok=False, detail=f"LM Studio не отвечает на {LOCAL_URL}")
     return info
 
@@ -204,3 +195,32 @@ def chat_reply(profile: dict, plan_products: list[dict], history: list[dict], me
         parts.append("[Предыдущий разговор]\n" + "\n".join(lines))
     parts.append(f"[Новый вопрос]\n{message}")
     return complete("\n\n".join(parts))
+
+
+def complete_structured(prompt: str, schema: dict, system: str) -> str:
+    """JSON Schema через OpenAI-совместимый endpoint LM Studio."""
+    if PROVIDER == "anthropic":
+        return complete(prompt, system=system, max_tokens=2000)
+    from urllib.parse import urlsplit, urlunsplit
+    parts = urlsplit(LOCAL_URL)
+    url = urlunsplit((parts.scheme, parts.netloc, "/v1/chat/completions", "", ""))
+    payload = {
+        "model": LOCAL_MODEL,
+        "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+        "temperature": 0.2, "max_tokens": 8192, "stream": False,
+        "response_format": {"type": "json_schema", "json_schema": {"name": "daily_skincare_plan", "strict": True, "schema": schema}},
+    }
+    try:
+        with httpx.Client(timeout=LOCAL_TIMEOUT) as client:
+            response = client.post(url, json=payload)
+        response.raise_for_status()
+        data = response.json()
+        choice = data["choices"][0]
+        content = choice["message"].get("content") or ""
+    except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as exc:
+        raise AIUnavailable("Не удалось получить структурированный план из LM Studio. Текущий план сохранён.") from exc
+    if choice.get("finish_reason") == "length":
+        raise AIUnavailable("Модель не успела завершить план в пределах ответа. Попробуй повторить подбор.")
+    if not content.strip():
+        raise AIUnavailable("Локальная модель не вернула готовый план. Текущий план сохранён.")
+    return _strip_reasoning(content)
