@@ -11,3 +11,12 @@ htmlcov/
 .vscode/
 .mutmut-cache
 mutants/
+
+# Личные инструкции и рабочие материалы хранятся отдельно от итогового проекта.
+/README.md
+/read.md
+/ТЗ на тестирование.docx
+/ТЗ на оставшиеся проверки.docx
+/docs/testing/
+/docs/prices.md
+/Analitika (актуальная).docx
