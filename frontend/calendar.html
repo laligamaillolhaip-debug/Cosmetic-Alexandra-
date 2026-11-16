@@ -123,6 +123,10 @@
       renderChecklist();
     }
 
-</script>
+    buildDateStrip();
+    loadDay().catch(err => {
+      document.getElementById("checklist").innerHTML = `<p class="error-text">${err.message}</p>`;
+    });
+  </script>
 </body>
 </html>
