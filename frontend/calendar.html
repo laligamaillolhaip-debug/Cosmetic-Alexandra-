@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ядро — календарь</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .progress-ring{
+    display:flex; align-items:center; gap:14px;
+    padding:16px 20px; border-radius:var(--r-lg); margin-bottom:22px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012));
+    border:1px solid var(--border);
+  }
+  .progress-ring .txt{flex:1;}
+  .progress-ring .lbl{font-size:13px; color:var(--text-muted);}
+  .progress-ring .val{font-family:var(--font-mono); font-size:20px; margin-top:2px;}
+</style>
+</head>
+<body>
+  <div id="topbar" class="topbar"></div>
+
+  <div class="container-narrow">
+    <div class="page-head">
+      <span class="eyebrow">Режим нанесения</span>
+      <h1 id="dateTitle">Сегодня</h1>
+    </div>
+
+    <div class="date-strip no-scrollbar" id="dateStrip" style="margin-bottom:22px;"></div>
+
+    <div class="segmented" id="todTabs"></div>
+
+    <div class="progress-ring">
+      <div class="thumb sm" id="progressIcon"></div>
+      <div class="txt">
+        <div class="lbl">Выполнено за этот блок</div>
+        <div class="val" id="progressVal">0 / 0</div>
+      </div>
+    </div>
+
+    <div id="checklist"></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script></script>
+</body>
+</html>
