@@ -93,6 +93,18 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 """
 
 
+SCHEMA += """
+CREATE TABLE IF NOT EXISTS plan_drafts (
+    id TEXT PRIMARY KEY,
+    profile_id TEXT NOT NULL REFERENCES profiles(id),
+    selection_json TEXT NOT NULL,
+    fingerprint TEXT NOT NULL,
+    model TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+"""
+
+
 @contextmanager
 def get_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -119,6 +131,9 @@ def init_db():
 def _migrate(conn):
     """Досоздаёт колонки, появившиеся позже, чтобы старая база не ломалась."""
     columns = {r["name"] for r in conn.execute("PRAGMA table_info(profiles)")}
+    for name, definition in {"plan_source": "TEXT NOT NULL DEFAULT 'rules'", "plan_summary": "TEXT", "plan_model": "TEXT"}.items():
+        if name not in columns:
+            conn.execute(f"ALTER TABLE profiles ADD COLUMN {name} {definition}")
     if "user_id" not in columns:
         conn.execute("ALTER TABLE profiles ADD COLUMN user_id TEXT REFERENCES users(id)")
 

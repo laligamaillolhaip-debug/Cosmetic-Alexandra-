@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 from datetime import datetime, timezone
 
@@ -45,23 +46,28 @@ def create_profile(payload: ProfileIn, user: dict = Depends(auth.current_user)):
 
 
 @router.get("/{profile_id}")
-def get_profile(profile_id: str = Depends(auth.require_profile_access)):
+def get_profile(profile_id: str = Depends(auth.require_profile_access),
+                user: dict = Depends(auth.current_user)):
     with get_db() as conn:
         row = conn.execute("SELECT * FROM profiles WHERE id=?", (profile_id,)).fetchone()
         if not row:
             raise HTTPException(404, "Профиль не найден")
         profile = row_to_dict(row)
-        profile["stats"] = {
-            "favorites": conn.execute(
-                "SELECT COUNT(*) c FROM favorites WHERE profile_id=?", (profile_id,)
-            ).fetchone()["c"],
-            "plan_items": conn.execute(
-                "SELECT COUNT(DISTINCT product_id) c FROM plan_items WHERE profile_id=?", (profile_id,)
-            ).fetchone()["c"],
-            "done_steps": conn.execute(
-                "SELECT COUNT(*) c FROM routine_log WHERE profile_id=? AND done=1", (profile_id,)
-            ).fetchone()["c"],
-        }
+        owner_id = os.getenv("PROFILE_OWNER_ID", "").strip()
+        profile["is_owner"] = bool(owner_id) and user["id"] == owner_id
+        if profile["is_owner"]:
+            profile["account_email"] = user["email"]
+            profile["stats"] = {
+                "favorites": conn.execute(
+                    "SELECT COUNT(*) c FROM favorites WHERE profile_id=?", (profile_id,)
+                ).fetchone()["c"],
+                "plan_items": conn.execute(
+                    "SELECT COUNT(DISTINCT product_id) c FROM plan_items WHERE profile_id=?", (profile_id,)
+                ).fetchone()["c"],
+                "done_steps": conn.execute(
+                    "SELECT COUNT(*) c FROM routine_log WHERE profile_id=? AND done=1", (profile_id,)
+                ).fetchone()["c"],
+            }
     return profile
 
 
@@ -111,7 +117,8 @@ def get_analysis(profile_id: str = Depends(auth.require_profile_access)):
         return {"analysis": text}
 
 
-def save_plan(conn, profile_id: str, plan: dict):
+def save_plan(conn, profile_id: str, plan: dict, source="rules", summary=None, model=None):
+    conn.execute("UPDATE profiles SET plan_source=?, plan_summary=?, plan_model=? WHERE id=?", (source, summary, model, profile_id))
     conn.execute("DELETE FROM plan_items WHERE profile_id=?", (profile_id,))
     for time_of_day, items in plan.items():
         for order, item in enumerate(items):

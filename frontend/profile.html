@@ -1,168 +1,35 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ядро — профиль</title>
-<link rel="stylesheet" href="css/style.css">
-<style>
-  .profile-grid{display:grid; grid-template-columns:1fr; gap:18px; align-items:start;}
-  @media (min-width:960px){ .profile-grid{grid-template-columns:1fr 1fr;} }
-
-  .panel{
-    background:linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012));
-    border:1px solid var(--border); border-radius:var(--r-xl);
-    padding:22px; display:flex; flex-direction:column; gap:16px;
-  }
-  .panel h2{font-size:17px; display:flex; align-items:center; gap:10px;}
-  .panel h2 svg{color:var(--accent);}
-
-  .tag-row{display:flex; gap:9px; flex-wrap:wrap;}
-  .tag{
-    font-size:13px; font-weight:600; padding:9px 15px; border-radius:var(--r-full);
-    background:var(--accent-soft); color:var(--accent); border:1px solid rgba(59,158,255,0.28);
-  }
-  .tag.plain{background:rgba(255,255,255,0.04); color:var(--text-muted); border-color:var(--border);}
-  .field{display:flex; flex-direction:column; gap:9px;}
-  .field-label{font-size:12px; font-weight:700; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.08em;}
-
-  .stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:11px;}
-  .stat{
-    padding:16px 12px; text-align:center; border-radius:var(--r-md);
-    background:rgba(255,255,255,0.03); border:1px solid var(--border);
-  }
-  .stat b{display:block; font-family:var(--font-mono); font-size:22px; font-weight:500; color:var(--text);}
-  .stat span{font-size:11.5px; color:var(--text-faint); margin-top:4px; display:block; line-height:1.3;}
-
-  .budget-line{display:flex; align-items:baseline; gap:10px;}
-  .budget-line b{font-family:var(--font-mono); font-size:28px; font-weight:500;}
-  .action-list{display:flex; flex-direction:column; gap:11px;}
-  .danger-btn{color:var(--danger); border-color:rgba(248,113,113,0.3);}
-  .danger-btn:hover{background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.5);}
-  .note{font-size:12.5px; color:var(--text-faint); line-height:1.55;}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080B12">
+  <title>Ядро — твой профиль</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/profile.css">
 </head>
-<body>
+<body class="profile-page">
   <div id="topbar" class="topbar"></div>
-
-  <div class="container">
-    <div class="page-head">
-      <span class="eyebrow">Твои ответы и настройки</span>
-      <h1>Профиль</h1>
-    </div>
-
-    <div id="body" class="loading">Загрузка...</div>
-  </div>
-
+  <main class="container profile-main">
+    <header class="profile-hero">
+      <div>
+        <p class="profile-kicker"><span class="section-index">01 /</span> Личное пространство</p>
+        <h1>Твой профиль<span>.</span></h1>
+        <p class="hero-caption">Твоя кожа. Твои потребности. Твой ритм.</p>
+      </div>
+      <div class="hero-budget" aria-label="Месячный бюджет">
+        <span class="profile-label">Бюджет на месяц</span>
+        <p><span id="heroBudget">—</span><span class="budget-currency"> ₽</span></p>
+        <span class="budget-footnote">Подбор средств в твоих границах</span>
+      </div>
+    </header>
+    <div id="profileContent" class="loading" aria-live="polite">Загружаем твой профиль…</div>
+    <footer class="profile-footer">
+      <p>ЯДРО <span>/</span> Уход, который подходит тебе</p>
+      <button class="profile-logout" id="logoutAccount" type="button">Выйти из аккаунта <span aria-hidden="true">↗</span></button>
+    </footer>
+  </main>
   <script src="js/api.js"></script>
-  <script>
-    const profileId = requireProfile();
-    renderTopbar("profile.html");
-
-    function render(p) {
-      document.getElementById("body").classList.remove("loading");
-      const skin = p.skin_types.map(s => `<span class="tag">${SKIN_TYPE_LABELS[s] || s}</span>`).join("");
-      const concerns = p.concerns.length
-        ? p.concerns.map(c => `<span class="tag plain">${CONCERN_LABELS[c] || c}</span>`).join("")
-        : `<span class="note">Ничего не отмечено</span>`;
-
-      document.getElementById("body").innerHTML = `
-        <div class="profile-grid">
-          <div class="panel">
-            <h2>${svg("user", 19)}Ответы опросника</h2>
-
-            <div class="field">
-              <span class="field-label">Тип кожи</span>
-              <div class="tag-row">${skin}</div>
-            </div>
-
-            <div class="field">
-              <span class="field-label">Что беспокоит</span>
-              <div class="tag-row">${concerns}</div>
-            </div>
-
-            <div class="field">
-              <span class="field-label">Бюджет в месяц</span>
-              <div class="budget-line"><b>${fmtPrice(p.budget_month)}</b></div>
-            </div>
-
-            <p class="note">Ошибся при заполнении или кожа изменилась? Пройди опросник заново — план пересоберётся, а избранное и отметки в календаре останутся.</p>
-
-            <div class="action-list">
-              <button class="btn-primary" id="redoQuiz">${svg("edit", 17)}Пройти опросник заново</button>
-              <button class="btn-ghost" id="editBudget">${svg("wallet", 17)}Изменить только бюджет</button>
-            </div>
-          </div>
-
-          <div class="panel">
-            <h2>${svg("plan", 19)}Статистика</h2>
-            <div class="stat-grid">
-              <div class="stat"><b>${p.stats.plan_items}</b><span>средств в плане</span></div>
-              <div class="stat"><b>${p.stats.favorites}</b><span>в избранном</span></div>
-              <div class="stat"><b>${p.stats.done_steps}</b><span>шагов выполнено</span></div>
-            </div>
-
-            <div class="field">
-              <span class="field-label">Аккаунт</span>
-              <div class="tag-row">
-                <span class="tag plain" id="userEmail">—</span>
-              </div>
-            </div>
-
-            <div class="field">
-              <span class="field-label">Нейросеть</span>
-              <div id="aiStatus" class="ai-status"><span class="led"></span>проверяем связь...</div>
-            </div>
-
-            <div class="field">
-              <span class="field-label">Разбор кожи от ИИ</span>
-              <p class="note" id="analysisText">${p.analysis ? "" : "Появится на странице плана после первого захода."}</p>
-            </div>
-
-            <div class="action-list" style="margin-top:auto;">
-              <button class="btn-ghost" id="logoutAll">${svg("logout", 17)}Выйти из аккаунта</button>
-              <button class="btn-ghost danger-btn" id="resetAll">${svg("reset", 17)}Начать заново с нуля</button>
-              <p class="note">Выход завершит сессию на этом устройстве. «Начать заново» сбрасывает ответы опроса — аккаунт и почта сохраняются.</p>
-            </div>
-          </div>
-        </div>`;
-
-      // разбор кожи вставляем текстом, а не в разметку
-      if (p.analysis) document.getElementById("analysisText").textContent = p.analysis;
-
-      document.getElementById("userEmail").textContent = Store.getEmail() || "—";
-      document.getElementById("logoutAll").onclick = () => Auth.logout();
-
-      api("/api/meta/ai-status").then(s => {
-        const el = document.getElementById("aiStatus");
-        el.classList.add(s.ok ? "online" : "offline");
-        const where = s.provider === "local" ? "локальная модель" : "облачный Claude";
-        el.innerHTML = `<span class="led"></span>${s.ok ? where : "нет связи"} · <code>${s.model}</code>`;
-        el.title = s.detail;
-      }).catch(() => {
-        const el = document.getElementById("aiStatus");
-        el.classList.add("offline");
-        el.innerHTML = `<span class="led"></span>статус неизвестен`;
-      });
-
-      document.getElementById("redoQuiz").onclick = () => {
-        Store.setQuiz({ skin_types: [...p.skin_types], concerns: [...p.concerns] });
-        window.location.href = "quiz.html?edit=1";
-      };
-      document.getElementById("editBudget").onclick = () => {
-        Store.setQuiz({ skin_types: [...p.skin_types], concerns: [...p.concerns] });
-        window.location.href = "budget.html?edit=1";
-      };
-      document.getElementById("resetAll").onclick = () => {
-        if (!confirm("Пройти всё заново? Ответы опроса, план и избранное сбросятся, аккаунт останется.")) return;
-        localStorage.removeItem("yadro_quiz");
-        window.location.href = "quiz.html";
-      };
-    }
-
-    api(`/api/profile/${profileId}`).then(render).catch(err => {
-      document.getElementById("body").innerHTML = `<p class="error-text">${err.message}</p>`;
-    });
-  </script>
+  <script src="js/profile.js"></script>
 </body>
 </html>
