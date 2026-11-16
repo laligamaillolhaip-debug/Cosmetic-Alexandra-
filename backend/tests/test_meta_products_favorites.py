@@ -39,8 +39,10 @@ def test_list_products(client):
 def test_list_products_filter_category(client):
     response = client.get("/api/products?category=serum")
     assert response.status_code == 200
-    for p in response.json()["items"]:
-        assert p["category"] == "serum"
+    items = response.json()["items"]
+    assert items, "Seed data must include serum products"
+    for item in items:
+        assert item["product"]["category"] == "serum"
 
 def test_get_product_success(client):
     product_id = str(uuid.uuid4())
