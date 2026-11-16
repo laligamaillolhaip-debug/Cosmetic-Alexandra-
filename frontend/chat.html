@@ -89,6 +89,13 @@
       if (e.key === "Enter") sendMessage();
     });
 
-</script>
+    api(`/api/chat/${profileId}/history`).then(({ messages }) => {
+      if (!messages.length) {
+        appendMsg("assistant", "Привет. Я вижу твой тип кожи, бюджет и собранный план — спрашивай про любое средство или про уход в целом.");
+      } else {
+        messages.forEach(m => appendMsg(m.role, m.content));
+      }
+    });
+  </script>
 </body>
 </html>
