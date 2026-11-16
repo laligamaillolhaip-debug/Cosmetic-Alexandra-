@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ядро — план ухода</title>
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/editorial.css">
 <style>
   .budget-bar{
     display:flex; align-items:center; gap:16px; flex-wrap:wrap;
@@ -31,14 +32,15 @@
   }
 </style>
 </head>
-<body>
+<body class="editorial-page plan-page">
   <div id="topbar" class="topbar"></div>
 
   <div class="container">
-    <div class="page-head">
-      <span class="eyebrow">Собрано под твою кожу</span>
-      <h1>Твой план ухода</h1>
-    </div>
+    <header class="editorial-hero">
+      <p class="editorial-label"><span>02 /</span> Ежедневный уход</p>
+      <h1>Твой ежедневный ритм<span>.</span></h1>
+      <div class="hero-bottom"><p>От первого очищения до последнего шага.</p><span class="plan-origin" id="planOrigin">Твой план</span></div>
+    </header>
 
     <div class="budget-bar">
       <div class="figures">
@@ -49,14 +51,21 @@
       <span class="budget-left" id="budgetLeft"></span>
     </div>
 
-    <div id="aiAnalysis" class="ai-block" style="margin-bottom:24px;">
-      <div class="ai-label" id="aiLabel">Разбор ИИ</div>
-      <p id="aiAnalysisText">Анализируем твой профиль...</p>
-    </div>
-
+    <section class="ai-composer" aria-labelledby="composerTitle">
+      <div class="composer-intro"><div><span class="editorial-label">Подбор с ИИ</span><h2 id="composerTitle">Уход под твои потребности.</h2><p>ИИ выберет средства из каталога на утро и вечер, учитывая анкету и бюджет.</p></div><button class="editorial-primary" id="generatePlan" type="button">Подобрать уход с ИИ <span aria-hidden="true">↗</span></button></div>
+      <div id="plannerStatus" class="planner-status" role="status" aria-live="polite">Сначала покажем предложение. Текущий план останется, пока ты не применишь новый.</div>
+      <div id="aiDraft" class="ai-draft" hidden>
+        <p class="draft-label">Предложение для тебя</p><p id="draftSummary"></p><p id="draftPrice" class="draft-price"></p>
+        <div class="draft-routines" id="draftRoutines"></div>
+        <p class="purchase-note">Стоимость набора уникальных средств. Если средство есть в обоих блоках, покупка учитывается один раз. Месячный расход без данных о дозировке не рассчитывается.</p>
+        <div class="draft-actions"><button class="editorial-primary" id="applyDraft" type="button">Применить новый план</button><button class="editorial-secondary" id="dismissDraft" type="button">Оставить текущий</button></div>
+      </div>
+    </section>
+    <p id="planSummary" class="plan-summary"></p>
+    <p class="purchase-note">Сумма выше — стоимость набора, а не расчёт расхода за месяц. Подбор не заменяет консультацию дерматолога.</p>
     <div class="plan-layout">
       <div>
-        <div class="segmented" id="todTabs"></div>
+        <div class="favorite-target"><span class="editorial-label">Добавлять из избранного</span><div class="segmented" id="todTabs"></div></div>
         <div id="planBody"></div>
       </div>
 
@@ -65,7 +74,7 @@
           <h3 id="favTitle">Избранное</h3>
           <span class="fav-count" id="favCount"></span>
         </div>
-        <p class="fav-hint">Перетащи средство в план или нажми «+». Шаги внутри плана тоже можно менять местами за точки слева.</p>
+        <p class="fav-hint">Перетащи средство в план или нажми «+». Для кнопки «+» выбери время суток выше. Шаги можно менять местами за точки слева.</p>
         <div class="fav-list" id="favList"></div>
       </aside>
     </div>
@@ -73,163 +82,6 @@
 
   <script src="js/api.js"></script>
   <script src="js/dnd.js"></script>
-  <script>
-    const profileId = requireProfile();
-    let currentTod = "morning";
-    let planData = null;
-    let favData = [];
-
-    renderTopbar("plan.html");
-    document.getElementById("aiLabel").innerHTML = svg("sparkle", 14) + "Разбор ИИ";
-    document.getElementById("favTitle").innerHTML = svg("heart", 18) + "Избранное";
-
-    document.getElementById("todTabs").innerHTML = `
-      <button class="seg active" data-tod="morning">${svg("sun", 16)}Утро</button>
-      <button class="seg" data-tod="evening">${svg("moon", 16)}Вечер</button>`;
-    document.querySelectorAll(".seg").forEach(btn => btn.onclick = () => setTod(btn.dataset.tod));
-
-    function setTod(tod) {
-      currentTod = tod;
-      document.querySelectorAll(".seg").forEach(s => s.classList.toggle("active", s.dataset.tod === tod));
-      renderPlan();
-    }
-
-    function renderPlan() {
-      const body = document.getElementById("planBody");
-      if (!planData) return;
-      const items = planData.plan[currentTod];
-
-      if (!items.length) {
-        body.innerHTML = `
-          <div class="plan-column" data-drop-list data-tod="${currentTod}">
-            <div class="empty-state">
-              Здесь пока пусто.<br>Перетащи сюда средство из избранного или добавь из каталога.
-            </div>
-          </div>`;
-        return;
-      }
-
-      // группируем по категориям, но порядок шагов сохраняем как в плане
-      let html = `<div class="plan-column" data-drop-list data-tod="${currentTod}">`;
-      let lastCategory = null;
-      items.forEach((item, i) => {
-        if (item.category_label !== lastCategory) {
-          html += `<div class="cat-head">${item.category_label}</div>`;
-          lastCategory = item.category_label;
-        }
-        html += planItemHtml(item, i + 1);
-      });
-      html += `</div>`;
-      body.innerHTML = html;
-
-      body.querySelectorAll("[data-remove-item]").forEach(btn => {
-        btn.onclick = async (e) => {
-          e.preventDefault(); e.stopPropagation();
-          await api(`/api/plan/${profileId}/items/${btn.dataset.removeItem}`, { method: "DELETE" });
-          await loadPlan();
-        };
-      });
-    }
-
-    function planItemHtml(item, num) {
-      const p = item.product;
-      return `
-        <div class="plan-item" data-draggable="plan" data-item-id="${item.item_id}">
-          <span class="drag-handle" data-drag-handle title="Перетащить">${svg("grip", 17)}</span>
-          <span class="step-num">${num}</span>
-          <div class="thumb sm">${svg(p.icon, 24)}</div>
-          <div class="product-info">
-            <a class="product-name" href="product.html?id=${p.id}">${p.name}</a>
-            <div class="product-brand">${p.brand}</div>
-            <div class="plan-reason">${item.reason}</div>
-          </div>
-          <div class="plan-actions">
-            ${priceHtml(item.price)}
-            <button class="mini-btn" data-remove-item="${item.item_id}" title="Убрать из плана">${svg("close", 15)}</button>
-          </div>
-        </div>`;
-    }
-
-    function renderFavorites() {
-      const list = document.getElementById("favList");
-      document.getElementById("favCount").textContent = favData.length ? `${favData.length} шт.` : "";
-      if (!favData.length) {
-        list.innerHTML = `<div class="fav-empty">Пока ничего не добавлено.<br>Жми на сердечко в каталоге — средства появятся здесь.</div>`;
-        return;
-      }
-      list.innerHTML = favData.map(({ product, price }) => `
-        <div class="fav-item" data-draggable="fav" data-product-id="${product.id}">
-          <span class="drag-handle" data-drag-handle title="Перетащить в план">${svg("grip", 16)}</span>
-          <div class="thumb sm" style="width:40px;height:40px;">${svg(product.icon, 20)}</div>
-          <div style="flex:1; min-width:0;">
-            <div class="fav-name">${product.name}</div>
-            <div class="fav-price">${price ? fmtPrice(price.price) : "—"}</div>
-          </div>
-          <button class="mini-btn add" data-add="${product.id}" title="Добавить в план">${svg("plus", 15)}</button>
-        </div>`).join("");
-
-      list.querySelectorAll("[data-add]").forEach(btn => {
-        btn.onclick = () => addToPlan(btn.dataset.add, currentTod);
-      });
-    }
-
-    async function addToPlan(productId, tod) {
-      await api(`/api/plan/${profileId}/items`, {
-        method: "POST",
-        body: JSON.stringify({ product_id: productId, time_of_day: tod }),
-      });
-      await loadPlan();
-    }
-
-    DnD.onAddToPlan = (productId, tod) => addToPlan(productId, tod);
-    DnD.onReorder = async (tod, itemIds) => {
-      await api(`/api/plan/${profileId}/reorder`, {
-        method: "POST",
-        body: JSON.stringify({ time_of_day: tod, item_ids: itemIds }),
-      });
-      const byId = new Map(planData.plan[tod].map(i => [i.item_id, i]));
-      planData.plan[tod] = itemIds.map(id => byId.get(id)).filter(Boolean);
-      renderPlan(); // перерисовываем, чтобы заголовки категорий встали по новому порядку
-    };
-
-    async function loadPlan() {
-      planData = await api(`/api/plan/${profileId}`);
-      const { spent, budget } = planData;
-      document.getElementById("spentVal").textContent = fmtPrice(spent);
-      document.getElementById("budgetOf").textContent = `из ${fmtPrice(budget)}`;
-      document.getElementById("budgetMeter").style.width = Math.min(100, (spent / budget) * 100) + "%";
-      const left = budget - spent;
-      document.getElementById("budgetLeft").textContent =
-        left >= 0 ? `осталось ${fmtPrice(left)}` : `перерасход ${fmtPrice(-left)}`;
-      document.getElementById("budgetLeft").style.color = left >= 0 ? "var(--success)" : "var(--warning)";
-      renderPlan();
-    }
-
-    async function loadFavorites() {
-      const data = await api(`/api/favorites/${profileId}`);
-      favData = data.items;
-      Favorites.ids = new Set(data.ids);
-      renderFavorites();
-    }
-
-    loadPlan().catch(err => {
-      document.getElementById("planBody").innerHTML = `<p class="error-text">${err.message}</p>`;
-    });
-    loadFavorites();
-
-    const analysisSlot = document.getElementById("aiAnalysisText");
-    const stopThinking = showThinking(analysisSlot, "Разбираю твой профиль");
-
-    api(`/api/profile/${profileId}/analysis`, { method: "POST" }).then(({ analysis, error }) => {
-      stopThinking();
-      const block = document.getElementById("aiAnalysis");
-      if (!analysis) block.classList.add("muted");
-      analysisSlot.textContent = analysis || error || "Нет ответа от ИИ.";
-    }).catch(err => {
-      stopThinking();
-      document.getElementById("aiAnalysis").classList.add("muted");
-      analysisSlot.textContent = "ИИ недоступен: " + err.message;
-    });
-  </script>
+  <script src="js/plan.js"></script>
 </body>
 </html>
