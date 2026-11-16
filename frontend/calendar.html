@@ -106,6 +106,23 @@
       });
     }
 
+    async function toggle(productId, done) {
+      await api(`/api/calendar/${profileId}/toggle`, {
+        method: "POST",
+        body: JSON.stringify({ date: selectedDate, time_of_day: currentTod, product_id: productId, done }),
+      });
+      await loadDay();
+    }
+
+    async function loadDay() {
+      dayData = await api(`/api/calendar/${profileId}?for_date=${selectedDate}`);
+      const isToday = selectedDate === new Date().toLocaleDateString("sv-SE");
+      document.getElementById("dateTitle").textContent = isToday
+        ? "Сегодня"
+        : new Date(selectedDate).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+      renderChecklist();
+    }
+
 </script>
 </body>
 </html>
