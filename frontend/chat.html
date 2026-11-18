@@ -3,99 +3,53 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ядро — ассистент</title>
+<meta name="theme-color" content="#080B12">
+<title>Ядро — диалог об уходе</title>
 <link rel="stylesheet" href="css/style.css">
-<style>
-  .chat-shell{
-    max-width:720px; margin:0 auto; padding:0 22px 10px;
-    display:flex; flex-direction:column;
-    height:calc(100dvh - 330px); min-height:320px;
-  }
-  #chatArea{flex:1; overflow-y:auto; padding:6px 4px 10px;}
-  @media (min-width:900px){ .chat-shell{height:calc(100dvh - 240px);} }
-</style>
+<link rel="stylesheet" href="css/editorial.css">
+<link rel="stylesheet" href="css/routine-pages.css">
 </head>
-<body>
-  <div id="topbar" class="topbar"></div>
-
-  <div class="container">
-    <div class="page-head" style="padding-bottom:14px;">
-      <span class="eyebrow">Знает твой профиль и план</span>
-      <h1>ИИ-ассистент</h1>
-    </div>
+<body class="editorial-page chat-page">
+<div id="topbar" class="topbar"></div>
+<main class="container routine-main">
+  <header class="editorial-hero">
+    <p class="editorial-label"><span>05 /</span> Осознанный уход</p>
+    <h1>Разберёмся вместе<span>.</span></h1>
+    <div class="hero-bottom"><p>О твоей коже, средствах и ежедневном уходе.</p><span class="plan-origin">Личный диалог</span></div>
+  </header>
+  <div class="routine-layout chat-layout">
+    <aside class="routine-aside chat-aside">
+      <section class="chat-context" aria-labelledby="contextTitle">
+        <h2 class="editorial-label" id="contextTitle">В контексте твоего ухода</h2>
+        <p><strong id="skinContext">Твоя анкета</strong></p>
+        <p>Бюджет: <strong id="budgetContext">—</strong></p>
+        <p class="routine-note">Ассистент учитывает ответы анкеты и средства из сохранённого плана.</p>
+      </section>
+      <section aria-labelledby="suggestTitle">
+        <h2 class="editorial-label" id="suggestTitle">С чего начать</h2>
+        <div class="chat-prompts" id="suggestRow"></div>
+      </section>
+      <a class="routine-link" href="plan.html">Перейти к подбору средств <span aria-hidden="true">↗</span></a>
+    </aside>
+    <section aria-labelledby="chatTitle">
+      <div class="chat-panel">
+        <header class="chat-panel-head"><h2 id="chatTitle">Твой ассистент</h2><span id="chatStatus" role="status">Загружаем историю</span></header>
+        <div id="chatArea" class="chat-area" role="log" aria-label="Переписка с ассистентом" aria-live="polite"></div>
+        <form id="chatForm" class="chat-composer">
+          <label for="chatInput" class="editorial-label">Твой вопрос</label>
+          <div class="chat-input-row">
+            <textarea id="chatInput" rows="2" maxlength="1000" placeholder="Что хочешь узнать об уходе?" required></textarea>
+            <button class="send-btn" id="sendBtn" type="submit" aria-label="Отправить сообщение" disabled></button>
+          </div>
+          <div class="composer-foot"><span>Enter — отправить · Shift + Enter — новая строка</span><span id="charCount">0 / 1000</span></div>
+          <p class="routine-error" id="chatError" role="alert"></p>
+        </form>
+      </div>
+      <p class="chat-disclaimer">Ассистент помогает разобраться в косметическом уходе. При выраженных проблемах кожи обратись к дерматологу. Изменить набор средств можно на странице плана.</p>
+    </section>
   </div>
-
-  <div class="chat-shell">
-    <div id="chatArea" class="chat-area"></div>
-    <div class="chip-row no-scrollbar" id="suggestRow" style="margin-top:10px;"></div>
-    <div class="chat-input-row">
-      <input type="text" id="chatInput" placeholder="Спросить об уходе...">
-      <button class="send-btn" id="sendBtn"></button>
-    </div>
-  </div>
-
-  <script src="js/api.js"></script>
-  <script>
-    const profileId = requireProfile();
-    renderTopbar("chat.html");
-    document.getElementById("sendBtn").innerHTML = svg("send", 19);
-
-    const suggestions = [
-      "Почему выбрана именно эта сыворотка?",
-      "Есть аналог дешевле?",
-      "Что делать с раздражением после бритья?",
-      "Собери план подешевле",
-    ];
-    document.getElementById("suggestRow").innerHTML = suggestions
-      .map(s => `<button class="suggest-chip" data-text="${s}">${s}</button>`).join("");
-    document.querySelectorAll(".suggest-chip").forEach(btn => {
-      btn.onclick = () => sendMessage(btn.dataset.text);
-    });
-
-    function appendMsg(role, text) {
-      const area = document.getElementById("chatArea");
-      const div = document.createElement("div");
-      div.className = `msg ${role === "user" ? "me" : "ai"} fade-in`;
-      div.textContent = text;
-      area.appendChild(div);
-      area.scrollTop = area.scrollHeight;
-      return div;
-    }
-
-    async function sendMessage(text) {
-      const input = document.getElementById("chatInput");
-      const value = (text ?? input.value).trim();
-      if (!value) return;
-      input.value = "";
-      appendMsg("user", value);
-      const pending = appendMsg("assistant", "");
-      const stopThinking = showThinking(pending, "Модель думает");
-      try {
-        const { reply } = await api(`/api/chat/${profileId}`, {
-          method: "POST",
-          body: JSON.stringify({ message: value }),
-        });
-        stopThinking();
-        pending.textContent = reply;
-      } catch (err) {
-        stopThinking();
-        pending.textContent = "ИИ недоступен: " + err.message;
-      }
-      document.getElementById("chatArea").scrollTop = document.getElementById("chatArea").scrollHeight;
-    }
-
-    document.getElementById("sendBtn").onclick = () => sendMessage();
-    document.getElementById("chatInput").addEventListener("keydown", e => {
-      if (e.key === "Enter") sendMessage();
-    });
-
-    api(`/api/chat/${profileId}/history`).then(({ messages }) => {
-      if (!messages.length) {
-        appendMsg("assistant", "Привет. Я вижу твой тип кожи, бюджет и собранный план — спрашивай про любое средство или про уход в целом.");
-      } else {
-        messages.forEach(m => appendMsg(m.role, m.content));
-      }
-    });
-  </script>
+</main>
+<script src="js/api.js"></script>
+<script src="js/chat.js"></script>
 </body>
 </html>

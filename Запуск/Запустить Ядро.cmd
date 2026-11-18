@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d "%~dp0"
+cd /d "%~dp0.."
 title Yadro
 if exist ".venv\Scripts\python.exe" goto dependencies
 py -3.12 --version >nul 2>&1
@@ -8,6 +8,7 @@ if not errorlevel 1 goto create_py
 python -c "import sys; sys.exit(0 if sys.version_info[:2] == (3, 12) else 1)" >nul 2>&1
 if not errorlevel 1 goto create_python
 echo Python 3.12 is required. Install it, then open this file again.
+echo The installer is python-3.12.10-amd64.exe in this folder.
 goto error
 :create_py
 py -3.12 -m venv .venv

@@ -3,130 +3,43 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ядро — календарь</title>
+<meta name="theme-color" content="#080B12">
+<title>Ядро — календарь ухода</title>
 <link rel="stylesheet" href="css/style.css">
-<style>
-  .progress-ring{
-    display:flex; align-items:center; gap:14px;
-    padding:16px 20px; border-radius:var(--r-lg); margin-bottom:22px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.012));
-    border:1px solid var(--border);
-  }
-  .progress-ring .txt{flex:1;}
-  .progress-ring .lbl{font-size:13px; color:var(--text-muted);}
-  .progress-ring .val{font-family:var(--font-mono); font-size:20px; margin-top:2px;}
-</style>
+<link rel="stylesheet" href="css/editorial.css">
+<link rel="stylesheet" href="css/routine-pages.css">
 </head>
-<body>
-  <div id="topbar" class="topbar"></div>
-
-  <div class="container-narrow">
-    <div class="page-head">
-      <span class="eyebrow">Режим нанесения</span>
-      <h1 id="dateTitle">Сегодня</h1>
-    </div>
-
-    <div class="date-strip no-scrollbar" id="dateStrip" style="margin-bottom:22px;"></div>
-
-    <div class="segmented" id="todTabs"></div>
-
-    <div class="progress-ring">
-      <div class="thumb sm" id="progressIcon"></div>
-      <div class="txt">
-        <div class="lbl">Выполнено за этот блок</div>
-        <div class="val" id="progressVal">0 / 0</div>
+<body class="editorial-page calendar-page">
+<div id="topbar" class="topbar"></div>
+<main class="container routine-main">
+  <header class="editorial-hero">
+    <p class="editorial-label"><span>04 /</span> Постоянство в деталях</p>
+    <h1>Уход в твоём ритме<span>.</span></h1>
+    <div class="hero-bottom"><p>Каждый день. Шаг за шагом.</p><span class="plan-origin" id="dateLabel">Твой календарь</span></div>
+  </header>
+  <nav class="date-strip" id="dateStrip" aria-label="Выбрать день ухода"></nav>
+  <div class="routine-layout">
+    <aside class="routine-aside">
+      <p class="editorial-label">Прогресс выбранного блока</p>
+      <div class="calendar-aside-summary">
+        <div>
+          <p class="calendar-progress" id="progressVal" aria-live="polite">0 <span>/ 0</span></p>
+          <div class="calendar-meter" id="progressMeter" role="progressbar" aria-label="Выполнение ухода" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="progressFill"></i></div>
+          <p class="routine-note" id="progressCaption">Загружаем твой уход…</p>
+        </div>
+        <p class="routine-note">Отмечай средства после нанесения. Твои отметки сохранятся, даже если закрыть страницу.</p>
       </div>
-    </div>
-
-    <div id="checklist"></div>
+      <a class="routine-link" href="plan.html">Посмотреть план ухода <span aria-hidden="true">↗</span></a>
+    </aside>
+    <section aria-labelledby="dateTitle">
+      <div class="routine-section-head"><h2 id="dateTitle">Сегодня</h2><span class="editorial-label" id="blockLabel">Утренний уход</span></div>
+      <div class="segmented" id="todTabs" role="group" aria-label="Время ухода"></div>
+      <p class="routine-error" id="calendarError" role="alert"></p>
+      <div id="checklist" aria-busy="true"><p class="routine-note">Загружаем средства…</p></div>
+    </section>
   </div>
-
-  <script src="js/api.js"></script>
-  <script>
-    const profileId = requireProfile();
-    renderTopbar("calendar.html");
-    document.getElementById("progressIcon").innerHTML = svg("plan", 22);
-
-    let currentTod = "morning";
-    let selectedDate = new Date().toLocaleDateString("sv-SE");
-    let dayData = null;
-
-    document.getElementById("todTabs").innerHTML = `
-      <button class="seg active" data-tod="morning">${svg("sun", 16)}Утро</button>
-      <button class="seg" data-tod="evening">${svg("moon", 16)}Вечер</button>`;
-    document.querySelectorAll(".seg").forEach(btn => btn.onclick = () => setTod(btn.dataset.tod));
-
-    function buildDateStrip() {
-      const dow = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
-      const today = new Date();
-      const cells = [];
-      for (let i = -3; i <= 3; i++) {
-        const d = new Date(today);
-        d.setDate(today.getDate() + i);
-        const iso = d.toLocaleDateString("sv-SE");
-        cells.push(`
-          <button class="date-cell ${iso === selectedDate ? "today" : ""}" data-date="${iso}">
-            <span class="dow">${dow[d.getDay()]}</span>${d.getDate()}
-          </button>`);
-      }
-      document.getElementById("dateStrip").innerHTML = cells.join("");
-      document.querySelectorAll(".date-cell").forEach(btn => {
-        btn.onclick = () => { selectedDate = btn.dataset.date; buildDateStrip(); loadDay(); };
-      });
-    }
-
-    function setTod(tod) {
-      currentTod = tod;
-      document.querySelectorAll(".seg").forEach(s => s.classList.toggle("active", s.dataset.tod === tod));
-      renderChecklist();
-    }
-
-    function renderChecklist() {
-      const el = document.getElementById("checklist");
-      if (!dayData) return;
-      const items = dayData.checklist[currentTod];
-      const done = items.filter(i => i.done).length;
-      document.getElementById("progressVal").textContent = `${done} / ${items.length}`;
-
-      if (!items.length) {
-        el.innerHTML = `<div class="empty-state">На этот блок ничего не запланировано.<br>Добавь средства в план.</div>`;
-        return;
-      }
-      el.innerHTML = items.map(({ product, done }) => `
-        <div class="checklist-row ${done ? "is-done" : ""}">
-          <button class="check ${done ? "done" : ""}" data-toggle="${product.id}" data-done="${!done}">✓</button>
-          <div>
-            <div class="checklist-name ${done ? "done" : ""}">${product.name}</div>
-            <div class="checklist-sub">${product.brand}</div>
-          </div>
-        </div>`).join("");
-
-      el.querySelectorAll("[data-toggle]").forEach(btn => {
-        btn.onclick = () => toggle(btn.dataset.toggle, btn.dataset.done === "true");
-      });
-    }
-
-    async function toggle(productId, done) {
-      await api(`/api/calendar/${profileId}/toggle`, {
-        method: "POST",
-        body: JSON.stringify({ date: selectedDate, time_of_day: currentTod, product_id: productId, done }),
-      });
-      await loadDay();
-    }
-
-    async function loadDay() {
-      dayData = await api(`/api/calendar/${profileId}?for_date=${selectedDate}`);
-      const isToday = selectedDate === new Date().toLocaleDateString("sv-SE");
-      document.getElementById("dateTitle").textContent = isToday
-        ? "Сегодня"
-        : new Date(selectedDate).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
-      renderChecklist();
-    }
-
-    buildDateStrip();
-    loadDay().catch(err => {
-      document.getElementById("checklist").innerHTML = `<p class="error-text">${err.message}</p>`;
-    });
-  </script>
+</main>
+<script src="js/api.js"></script>
+<script src="js/calendar.js"></script>
 </body>
 </html>
