@@ -31,6 +31,9 @@ async function api(path, opts = {}, { noRedirect = false } = {}) {
       window.location.href = "login.html";
       throw new Error("Нужно войти в аккаунт");
     }
+    if (res.status === 405) {
+      throw new Error("Сервер на этом адресе не поддерживает это действие. Откройте сайт через сервер приложения.");
+    }
     let detail = res.statusText;
     try { detail = (await res.json()).detail || detail; } catch {}
     throw new Error(detail);

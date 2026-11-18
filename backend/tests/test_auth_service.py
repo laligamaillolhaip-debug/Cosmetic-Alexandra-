@@ -38,9 +38,18 @@ def test_hash_and_verify_password():
 def test_verify_password_invalid_format():
     assert verify_password("123456", "invalid_format") is False
 
-@pytest.mark.xfail(reason="Дефект D-06: int() и bytes.fromhex() стоят вне try, падает ValueError")
-def test_verify_password_broken_hash():
-    assert verify_password("123456", "pbkdf2_sha256$abc$zz$yy") is False
+@pytest.mark.parametrize("stored", [
+    "pbkdf2_sha256$abc$zz$yy",
+    "pbkdf2_sha256$0$aa$" + "00" * 32,
+    "pbkdf2_sha256$-1$aa$" + "00" * 32,
+    "pbkdf2_sha256$200000$$" + "00" * 32,
+    "pbkdf2_sha256$200000$aa$yy",
+    "pbkdf2_sha256$200000$aa$00",
+    "pbkdf2_sha256$999999999999999999999999$aa$" + "00" * 32,
+    None,
+])
+def test_verify_password_broken_hash(stored):
+    assert verify_password("123456", stored) is False
 
 def test_create_and_drop_session(db):
     from datetime import datetime, timezone

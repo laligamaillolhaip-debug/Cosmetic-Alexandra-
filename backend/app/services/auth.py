@@ -37,15 +37,18 @@ def hash_password(password: str) -> str:
 
 def verify_password(password: str, stored: str) -> bool:
     try:
-        algorithm, rounds, salt_hex, digest_hex = stored.split("$")
-    except ValueError:
+        algorithm, rounds_text, salt_hex, digest_hex = stored.split("$")
+        if algorithm != "pbkdf2_sha256":
+            return False
+        rounds = int(rounds_text)
+        salt = bytes.fromhex(salt_hex)
+        expected = bytes.fromhex(digest_hex)
+        if rounds <= 0 or not salt or len(expected) != hashlib.sha256().digest_size:
+            return False
+        digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, rounds)
+    except (ValueError, TypeError, AttributeError, OverflowError):
         return False
-    if algorithm != "pbkdf2_sha256":
-        return False
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode(),
-                                 bytes.fromhex(salt_hex), int(rounds))
-    # сравнение с защитой от подбора по времени ответа
-    return hmac.compare_digest(digest.hex(), digest_hex)
+    return hmac.compare_digest(digest, expected)
 
 
 def validate_credentials(email: str, password: str) -> None:
