@@ -11,6 +11,8 @@
 """
 from __future__ import annotations
 
+from dataclasses import dataclass, field
+
 CATEGORY_LABELS = {
     "cleanser": "Очищение",
     "toner": "Тоник",
@@ -102,80 +104,85 @@ def explain_pick(product: dict, skin_types: set[str], concerns: set[str],
     return "match", "Подходит под твой тип кожи"
 
 
+@dataclass
+class _PlanContext:
+    skin_types: set[str]
+    concerns: set[str]
+    budget: int
+    spent: int = 0
+    bought: dict[str, dict] = field(default_factory=dict)
+
+    def cost(self, product_id: str, price_info: dict) -> int:
+        return 0 if product_id in self.bought else price_info["price"]
+
+    def purchase(self, product_id: str, price_info: dict) -> None:
+        self.spent += self.cost(product_id, price_info)
+        self.bought[product_id] = price_info
+
+
+def _rank_candidates(slot, context, products, prices_by_product):
+    time_of_day, category = slot
+    scored = []
+    for product in products:
+        if product["category"] != category:
+            continue
+        if product["time_of_day"] not in ("both", time_of_day):
+            continue
+        if not (context.skin_types & set(product["skin_types"])) and not (context.concerns & set(product["concerns"])):
+            continue
+        cheapest = cheapest_price(prices_by_product.get(product["id"], []))
+        if not cheapest:
+            continue
+        score = score_product(product, context.skin_types, context.concerns, cheapest["price"])
+        if product["id"] in context.bought:
+            score += REUSE_BONUS
+        scored.append((score, product, cheapest))
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return scored
+
+
+def _choose_affordable(scored, context):
+    for _, product, price_info in scored:
+        if context.spent + context.cost(product["id"], price_info) <= context.budget:
+            return product, price_info
+    for _, product, price_info in sorted(scored, key=lambda item: item[2]["price"]):
+        if context.spent + context.cost(product["id"], price_info) <= context.budget:
+            return product, price_info
+    return None
+
+
+def _plan_item(product, price_info, context, prices_by_product):
+    all_prices = prices_by_product.get(product["id"], [])
+    badge, reason = explain_pick(product, context.skin_types, context.concerns, price_info, all_prices)
+    category = product["category"]
+    return {
+        "product": product,
+        "price": price_info,
+        "badge": badge,
+        "reason": reason,
+        "category_label": CATEGORY_LABELS.get(category, category),
+    }
+
+
+def _application_order(item):
+    category = item["product"]["category"]
+    return APPLICATION_ORDER.index(category) if category in APPLICATION_ORDER else 99
+
+
 def build_plan(profile: dict, products: list[dict], prices_by_product: dict[str, list[dict]]) -> dict:
-    """
-    Возвращает {"plan": {"morning": [...], "evening": [...]}, "spent": int, "budget": int}.
-
-    Заполняет слоты из PLAN_SLOTS по очереди, укладываясь в бюджет. Продукт,
-    уже купленный для другого блока, повторно бюджет не тратит — поэтому
-    утреннее и вечернее очищение обычно закрываются одним средством.
-    """
-    skin_types = set(profile["skin_types"])
-    concerns = set(profile["concerns"])
-    budget = profile["budget_month"]
-    spent = 0
+    """Собирает утренний и вечерний уход, учитывая каждую покупку один раз."""
+    context = _PlanContext(
+        set(profile["skin_types"]), set(profile["concerns"]), profile["budget_month"]
+    )
     plan = {"morning": [], "evening": []}
-    bought: dict[str, dict] = {}  # product_id -> price_info, что уже оплачено
-
-    for time_of_day, category in PLAN_SLOTS:
-        scored = []
-        for p in products:
-            if p["category"] != category:
-                continue
-            if p["time_of_day"] not in ("both", time_of_day):
-                continue
-            # подходит по типу кожи ИЛИ закрывает заявленную проблему
-            if not (skin_types & set(p["skin_types"])) and not (concerns & set(p["concerns"])):
-                continue
-            cheapest = cheapest_price(prices_by_product.get(p["id"], []))
-            if not cheapest:
-                continue
-
-            score = score_product(p, skin_types, concerns, cheapest["price"])
-            if p["id"] in bought:
-                score += REUSE_BONUS
-            scored.append((score, p, cheapest))
-
-        if not scored:
-            continue
-        scored.sort(key=lambda t: t[0], reverse=True)
-
-        def slot_cost(product_id: str, price_info: dict) -> int:
-            return 0 if product_id in bought else price_info["price"]
-
-        chosen = None
-        for _, p, price_info in scored:
-            if spent + slot_cost(p["id"], price_info) <= budget:
-                chosen = (p, price_info)
-                break
-        if chosen is None:
-            # даже лучший по цене не влезает — пробуем самый дешёвый вариант
-            for _, p, price_info in sorted(scored, key=lambda t: t[2]["price"]):
-                if spent + slot_cost(p["id"], price_info) <= budget:
-                    chosen = (p, price_info)
-                    break
+    for slot in PLAN_SLOTS:
+        scored = _rank_candidates(slot, context, products, prices_by_product)
+        chosen = _choose_affordable(scored, context)
         if chosen is None:
             continue
-
         product, price_info = chosen
-        spent += slot_cost(product["id"], price_info)
-        bought[product["id"]] = price_info
-
-        all_prices = prices_by_product.get(product["id"], [])
-        badge, reason = explain_pick(product, skin_types, concerns, price_info, all_prices)
-
-        plan[time_of_day].append({
-            "product": product,
-            "price": price_info,
-            "badge": badge,
-            "reason": reason,
-            "category_label": CATEGORY_LABELS.get(category, category),
-        })
-
-    # слоты заполнялись в порядке приоритета бюджета, а показывать нужно
-    # в порядке нанесения: сначала очищение, SPF — последним
+        context.purchase(product["id"], price_info)
+        plan[slot[0]].append(_plan_item(product, price_info, context, prices_by_product))
     for items in plan.values():
-        items.sort(key=lambda i: APPLICATION_ORDER.index(i["product"]["category"])
-                   if i["product"]["category"] in APPLICATION_ORDER else 99)
-
-    return {"plan": plan, "spent": spent, "budget": budget}
+        items.sort(key=_application_order)
+    return {"plan": plan, "spent": context.spent, "budget": context.budget}

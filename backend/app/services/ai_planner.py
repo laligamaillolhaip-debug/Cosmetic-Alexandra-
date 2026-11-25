@@ -78,47 +78,63 @@ def grounded_reason(product, profile):
     return text if len(text) <= 350 else text[:347] + "…"
 
 
+def _validate_pick(pick, tod, by_id, seen):
+    if not isinstance(pick, dict) or not isinstance(pick.get("id"), str):
+        raise InvalidPlan("У каждого шага должен быть ID из каталога.")
+    option = by_id.get(pick["id"])
+    if not option:
+        raise InvalidPlan("Выбран отсутствующий или неподходящий товар.")
+    product = option["product"]
+    if not fits_time(product, tod):
+        raise InvalidPlan("Товар не подходит для выбранного времени суток.")
+    if product["category"] in seen:
+        raise InvalidPlan("В одном блоке повторяется категория средства.")
+    if tod == "morning" and any("ретин" in a["name"].lower() or "retin" in a["name"].lower() for a in product["actives"]):
+        raise InvalidPlan("Ретиноид не включается в утренний план.")
+    reason = pick.get("reason")
+    if not isinstance(reason, str) or not reason.strip() or len(reason) > 350:
+        raise InvalidPlan("Для каждого товара нужно краткое объяснение до 350 символов.")
+    return option
+
+
+def _validate_block(picks, tod, by_id, profile):
+    if not isinstance(picks, list) or not 1 <= len(picks) <= 6:
+        raise InvalidPlan(f"Некорректный блок {tod}: нужно от 1 до 6 шагов.")
+    seen, items, bought = set(), [], {}
+    for pick in picks:
+        option = _validate_pick(pick, tod, by_id, seen)
+        product, price = option["product"], option["price"]
+        seen.add(product["category"])
+        bought[product["id"]] = price["price"]
+        items.append({
+            "product": product, "price": price, "badge": "ai",
+            "reason": grounded_reason(product, profile),
+            "category_label": CATEGORY_LABELS.get(product["category"], product["category"]),
+        })
+    if not BASE[tod].issubset(seen):
+        raise InvalidPlan("Не заполнена базовая схема: очищение и увлажнение в обоих блоках, SPF утром.")
+    items.sort(key=lambda item: APPLICATION_ORDER.index(item["product"]["category"]))
+    return items, bought
+
+
+def _validate_summary(summary):
+    if not isinstance(summary, str) or not summary.strip() or len(summary) > 900:
+        raise InvalidPlan("Нужно краткое объяснение всего плана до 900 символов.")
+    return summary.strip()
+
+
 def validate_selection(value, profile, options):
-    by_id = {p["product"]["id"]: p for p in options}
-    plan = {}
-    bought = {}
+    by_id = {option["product"]["id"]: option for option in options}
+    plan, bought = {}, {}
     for tod in BASE:
-        picks = value.get(tod)
-        if not isinstance(picks, list) or not 1 <= len(picks) <= 6:
-            raise InvalidPlan(f"Некорректный блок {tod}: нужно от 1 до 6 шагов.")
-        seen = set()
-        items = []
-        for pick in picks:
-            if not isinstance(pick, dict) or not isinstance(pick.get("id"), str):
-                raise InvalidPlan("У каждого шага должен быть ID из каталога.")
-            option = by_id.get(pick["id"])
-            if not option:
-                raise InvalidPlan("Выбран отсутствующий или неподходящий товар.")
-            p, price = option["product"], option["price"]
-            if not fits_time(p, tod):
-                raise InvalidPlan("Товар не подходит для выбранного времени суток.")
-            if p["category"] in seen:
-                raise InvalidPlan("В одном блоке повторяется категория средства.")
-            # Для ежедневной базовой схемы не назначаем самостоятельные курсы активов.
-            if tod == "morning" and any("ретин" in a["name"].lower() or "retin" in a["name"].lower() for a in p["actives"]):
-                raise InvalidPlan("Ретиноид не включается в утренний план.")
-            reason = pick.get("reason")
-            if not isinstance(reason, str) or not reason.strip() or len(reason) > 350:
-                raise InvalidPlan("Для каждого товара нужно краткое объяснение до 350 символов.")
-            seen.add(p["category"])
-            bought[p["id"]] = price["price"]
-            items.append({"product": p, "price": price, "badge": "ai", "reason": grounded_reason(p, profile), "category_label": CATEGORY_LABELS.get(p["category"], p["category"])})
-        if not BASE[tod].issubset(seen):
-            raise InvalidPlan("Не заполнена базовая схема: очищение и увлажнение в обоих блоках, SPF утром.")
-        items.sort(key=lambda item: APPLICATION_ORDER.index(item["product"]["category"]))
+        items, purchases = _validate_block(value.get(tod), tod, by_id, profile)
         plan[tod] = items
+        bought.update(purchases)
     spent = sum(bought.values())
     if spent > profile["budget_month"]:
         raise InvalidPlan(f"Стоимость уникальных средств {spent} ₽ превышает бюджет {profile['budget_month']} ₽.")
-    summary = value.get("summary")
-    if not isinstance(summary, str) or not summary.strip() or len(summary) > 900:
-        raise InvalidPlan("Нужно краткое объяснение всего плана до 900 символов.")
-    return {"plan": plan, "spent": spent, "budget": profile["budget_month"], "summary": summary.strip()}
+    summary = _validate_summary(value.get("summary"))
+    return {"plan": plan, "spent": spent, "budget": profile["budget_month"], "summary": summary}
 
 
 def generate(profile, products, prices):
