@@ -211,7 +211,8 @@ def complete_structured(prompt: str, schema: dict, system: str) -> str:
         "response_format": {"type": "json_schema", "json_schema": {"name": "daily_skincare_plan", "strict": True, "schema": schema}},
     }
     try:
-        with httpx.Client(timeout=LOCAL_TIMEOUT) as client:
+        # Local generation may take several minutes; only connection and I/O setup are bounded.
+        with httpx.Client(timeout=httpx.Timeout(LOCAL_TIMEOUT, read=None)) as client:
             response = client.post(url, json=payload)
         response.raise_for_status()
         data = response.json()
