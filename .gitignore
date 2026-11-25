@@ -1,5 +1,6 @@
 __pycache__/
 *.pyc
+node_modules/
 .env
 backend/app/data/app.db
 .venv/

@@ -61,12 +61,14 @@
       <form id="form" style="display:flex; flex-direction:column; gap:16px;">
         <div class="field">
           <label for="email">Почта</label>
-          <input type="email" id="email" autocomplete="email" placeholder="you@mail.ru" required>
+          <input type="text" id="email" autocomplete="email" inputmode="email"
+                 pattern="\s*[^@\s]+@[^@\s]+\.[a-zA-Zа-яА-Я]{2,}\s*"
+                 minlength="3" maxlength="160" placeholder="you@mail.ru" required>
         </div>
         <div class="field">
           <label for="password">Пароль</label>
           <input type="password" id="password" autocomplete="current-password"
-                 placeholder="не короче 6 символов" required>
+                 minlength="6" maxlength="200" placeholder="не короче 6 символов" required>
           <span class="hint" id="hint">Пароль хранится только в виде хэша — восстановить его нельзя.</span>
         </div>
         <button class="btn-primary" id="submitBtn" type="submit">ВОЙТИ</button>

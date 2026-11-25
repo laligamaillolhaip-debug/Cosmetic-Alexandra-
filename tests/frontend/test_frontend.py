@@ -1,4 +1,6 @@
 from pathlib import Path
+import shutil
+import subprocess
 
 import pytest
 
@@ -9,9 +11,12 @@ FRONTEND = ROOT / "frontend"
 
 @pytest.mark.parametrize("page", [
     "login.html",
+    "index.html",
     "quiz.html",
+    "budget.html",
     "plan.html",
     "catalog.html",
+    "product.html",
     "calendar.html",
     "chat.html",
     "profile.html",
@@ -38,3 +43,18 @@ def test_api_script_exposes_auth_and_credentials_storage():
     assert 'async me()' in api_js
     assert 'async logout()' in api_js
     assert "setEmail(v)" in api_js
+
+
+def test_javascript_frontend_unit_suite():
+    node = shutil.which("node")
+    assert node, "Node.js is required for the frontend unit tests"
+
+    result = subprocess.run(
+        [node, "--test", "tests/frontend/frontend.test.js"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=90,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
