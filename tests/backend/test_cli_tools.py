@@ -1,5 +1,4 @@
 import sys
-from contextlib import contextmanager
 
 from app.services.feeds import FeedOffer
 from app.services.scraper import PoliteRefusal
@@ -89,6 +88,23 @@ def test_update_prices_requires_shop_or_reset(monkeypatch):
         assert error.code == 2
     else:
         raise AssertionError("CLI should reject missing --shop and --reset")
+
+
+def test_update_prices_reset_restores_seed_sources_and_clears_urls(db, monkeypatch, capsys):
+    db.execute(
+        "UPDATE shop_prices SET source='feed', url='https://example.test/item' "
+        "WHERE product_id='cleanser-cerave-foaming' AND shop_name='Wildberries'"
+    )
+    db.commit()
+    monkeypatch.setattr(sys, "argv", ["update_prices", "--reset"])
+
+    update_prices.main()
+
+    rows = db.execute(
+        "SELECT source, url FROM shop_prices WHERE product_id='cleanser-cerave-foaming'"
+    ).fetchall()
+    assert "Сброшено записей:" in capsys.readouterr().out
+    assert all(row["source"] == "seed" and row["url"] is None for row in rows)
 
 
 def test_check_sources_cli_uses_only_stubbed_network_calls(monkeypatch, capsys):

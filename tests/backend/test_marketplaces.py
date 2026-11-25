@@ -13,6 +13,8 @@ from app.services.scraper import PoliteRefusal
     ({"salePriceU": 189900}, 1899),
     ({"priceU": 219900}, 2199),
     ({"sizes": [], "priceU": 0}, None),
+    ({"salePriceU": -100}, None),
+    ({"sizes": [{"price": {"product": -100}}]}, None),
     ({}, None),
 ])
 def test_wildberries_extracts_supported_price_shapes(raw, expected):

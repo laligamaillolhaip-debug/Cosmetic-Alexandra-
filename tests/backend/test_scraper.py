@@ -29,6 +29,30 @@ def test_response_cache_corrupt_json_is_a_cache_miss(tmp_path):
     assert cache.get("https://example.test/item") is None
 
 
+def test_polite_fetcher_uses_cached_body_without_robots_or_target_request(monkeypatch):
+    class CachedBody:
+        def get(self, _url):
+            return "cached body"
+
+        def set(self, _url, _body):
+            raise AssertionError("cache hit should not write")
+
+    fetcher, _cache = make_fetcher(monkeypatch, CachedBody())
+    fetcher.robots.allowed = lambda _url: (_ for _ in ()).throw(
+        AssertionError("cache hit should not check robots")
+    )
+    monkeypatch.setattr(
+        scraper.httpx,
+        "Client",
+        lambda **_kwargs: (_ for _ in ()).throw(AssertionError("cache hit should not request")),
+    )
+
+    result = fetcher.get("https://example.test/item")
+
+    assert result.text == "cached body"
+    assert result.from_cache is True
+
+
 def test_robots_gate_applies_disallow_and_crawl_delay(monkeypatch):
     calls = []
 
@@ -53,6 +77,20 @@ def test_robots_gate_applies_disallow_and_crawl_delay(monkeypatch):
     assert not gate.allowed("https://example.test/private/item")
     assert gate.crawl_delay("https://example.test/public") == 3
     assert calls == ["https://example.test/robots.txt"]
+
+
+def test_polite_fetcher_throttles_requests_to_domain(monkeypatch):
+    fetcher = PoliteFetcher.__new__(PoliteFetcher)
+    fetcher._last_request = {"example.test": 90.0}
+    now = [93.0]
+    delays = []
+    monkeypatch.setattr(scraper.time, "time", lambda: now[0])
+    monkeypatch.setattr(scraper.time, "sleep", delays.append)
+
+    fetcher._throttle("example.test", 5.0)
+
+    assert delays == [2.0]
+    assert fetcher._last_request["example.test"] == 93.0
 
 
 def make_fetcher(monkeypatch, cache=None):
@@ -183,6 +221,29 @@ def test_update_price_missing_price_preserves_existing_database_price(db, monkey
     )
 
     result = scraper.update_price(db, product_id, shop, "https://example.test", lambda _html: None)
+
+    after = db.execute(
+        "SELECT price FROM shop_prices WHERE product_id=? AND shop_name=?",
+        (product_id, shop),
+    ).fetchone()["price"]
+    assert result["ok"] is False
+    assert after == before
+
+
+def test_update_price_zero_preserves_existing_database_price(db, monkeypatch):
+    product_id = "cleanser-cerave-foaming"
+    shop = "Wildberries"
+    before = db.execute(
+        "SELECT price FROM shop_prices WHERE product_id=? AND shop_name=?",
+        (product_id, shop),
+    ).fetchone()["price"]
+    monkeypatch.setattr(
+        scraper.fetcher,
+        "get",
+        lambda url: scraper.FetchResult(url, "<html></html>", False),
+    )
+
+    result = scraper.update_price(db, product_id, shop, "https://example.test", lambda _html: 0)
 
     after = db.execute(
         "SELECT price FROM shop_prices WHERE product_id=? AND shop_name=?",

@@ -115,6 +115,27 @@ def test_anthropic_complete_extracts_text_without_network(monkeypatch):
     assert ai._anthropic_complete("system", "prompt") == "Answer"
 
 
+def test_anthropic_complete_rejects_empty_text_response(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
+    class FakeAnthropic:
+        def __init__(self, **_kwargs):
+            self.messages = self
+
+        def create(self, **_kwargs):
+            return SimpleNamespace(content=[
+                SimpleNamespace(type="thinking", text="reasoning only"),
+            ])
+
+    monkeypatch.setitem(sys.modules, "anthropic", SimpleNamespace(
+        Anthropic=FakeAnthropic,
+        APIError=RuntimeError,
+    ))
+
+    with pytest.raises(AIUnavailable):
+        ai._anthropic_complete("system", "prompt")
+
+
 def test_anthropic_complete_converts_provider_error(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
 
@@ -199,3 +220,13 @@ def test_status_local_checks_loaded_model(monkeypatch):
 
     assert status["ok"] is True
     assert status["loaded_models"] == ["other-model", "local-model"]
+
+
+def test_status_local_reports_invalid_response_as_unavailable(monkeypatch):
+    monkeypatch.setattr(ai, "PROVIDER", "local")
+    install_http_client(get_response=FakeResponse(error=ValueError("invalid json")), monkeypatch=monkeypatch)
+
+    status = ai.status()
+
+    assert status["ok"] is False
+    assert "не отвечает" in status["detail"]

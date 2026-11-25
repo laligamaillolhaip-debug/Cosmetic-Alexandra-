@@ -142,3 +142,24 @@ def test_import_feed_writes_matched_offer_without_changing_other_shops(db):
     assert inserted["price"] == 1450
     assert inserted["source"] == "feed"
     assert after_other_shops == before
+
+
+def test_import_feed_updates_existing_shop_price_instead_of_adding_duplicate(db):
+    product = db.execute(
+        "SELECT * FROM products WHERE id='cleanser-cerave-foaming'"
+    ).fetchone()
+    xml = feed_xml(name=product["name"], vendor=product["brand"], price="1450")
+    before_count = db.execute(
+        "SELECT COUNT(*) FROM shop_prices WHERE product_id=? AND shop_name='Wildberries'",
+        (product["id"],),
+    ).fetchone()[0]
+
+    import_feed(db, "Wildberries", xml)
+
+    rows = db.execute(
+        "SELECT price, source FROM shop_prices WHERE product_id=? AND shop_name='Wildberries'",
+        (product["id"],),
+    ).fetchall()
+    assert len(rows) == before_count == 1
+    assert rows[0]["price"] == 1450
+    assert rows[0]["source"] == "feed"

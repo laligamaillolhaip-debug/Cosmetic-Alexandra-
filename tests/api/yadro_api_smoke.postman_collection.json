@@ -1,0 +1,439 @@
+{
+  "info": {
+    "_postman_id": "4e95229f-69a7-45f1-bf5d-d87a3f239716",
+    "name": "Ядро API — smoke tests",
+    "description": "Smoke-проверка основного API-пути. Перед запуском поднимите backend; Postman автоматически хранит cookie-сессию.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": "Postman-Test-123"
+    },
+    {
+      "key": "profileId",
+      "value": ""
+    },
+    {
+      "key": "productId",
+      "value": ""
+    },
+    {
+      "key": "itemId",
+      "value": ""
+    },
+    {
+      "key": "today",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Register",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('email', 'postman-' + Date.now() + '@example.test');",
+              "pm.collectionVariables.set('today', new Date().toISOString().slice(0, 10));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('registration succeeds', function () { pm.response.to.have.status(200); });",
+              "pm.test('new account has no profile', function () { pm.expect(pm.response.json().profile_id).to.eql(null); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/auth/register"
+      }
+    },
+    {
+      "name": "Get current user",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('session is authenticated', function () { pm.response.to.have.status(200); });",
+              "pm.test('account email matches', function () { pm.expect(pm.response.json().email).to.eql(pm.collectionVariables.get('email')); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/auth/me"
+      }
+    },
+    {
+      "name": "List products",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('catalog is available', function () { pm.response.to.have.status(200); });",
+              "const data = pm.response.json();",
+              "pm.expect(data.items.length).to.be.above(0);",
+              "pm.collectionVariables.set('productId', data.items[0].product.id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/products"
+      }
+    },
+    {
+      "name": "Create profile",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('profile is created', function () { pm.response.to.have.status(200); });",
+              "pm.collectionVariables.set('profileId', pm.response.json().profile_id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"skin_types\": [\"combination\"],\n  \"concerns\": [\"pores\"],\n  \"budget_month\": 5000\n}"
+        },
+        "url": "{{baseUrl}}/api/profile"
+      }
+    },
+    {
+      "name": "Get profile",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('profile is readable', function () { pm.response.to.have.status(200); });",
+              "pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('profileId'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/profile/{{profileId}}"
+      }
+    },
+    {
+      "name": "Update profile",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('profile update succeeds', function () { pm.response.to.have.status(200); });",
+              "pm.expect(pm.response.json().profile_id).to.eql(pm.collectionVariables.get('profileId'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"skin_types\": [\"combination\"],\n  \"concerns\": [\"acne\"],\n  \"budget_month\": 7000\n}"
+        },
+        "url": "{{baseUrl}}/api/profile/{{profileId}}"
+      }
+    },
+    {
+      "name": "Get plan",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('plan is available', function () { pm.response.to.have.status(200); });",
+              "pm.expect(pm.response.json().plan).to.have.keys('morning', 'evening');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/plan/{{profileId}}"
+      }
+    },
+    {
+      "name": "Add plan item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('item is added or already exists', function () { pm.response.to.have.status(200); });",
+              "pm.collectionVariables.set('itemId', pm.response.json().item_id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_id\": \"{{productId}}\",\n  \"time_of_day\": \"morning\"\n}"
+        },
+        "url": "{{baseUrl}}/api/plan/{{profileId}}/items"
+      }
+    },
+    {
+      "name": "Add favorite",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('favorite is saved', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_id\": \"{{productId}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/favorites/{{profileId}}"
+      }
+    },
+    {
+      "name": "Read favorites",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('favorites are readable', function () { pm.response.to.have.status(200); });",
+              "pm.expect(pm.response.json().ids).to.include(pm.collectionVariables.get('productId'));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/favorites/{{profileId}}"
+      }
+    },
+    {
+      "name": "Mark routine step done",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('calendar update succeeds', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"date\": \"{{today}}\",\n  \"time_of_day\": \"morning\",\n  \"product_id\": \"{{productId}}\",\n  \"done\": true\n}"
+        },
+        "url": "{{baseUrl}}/api/calendar/{{profileId}}/toggle"
+      }
+    },
+    {
+      "name": "Read calendar",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('calendar is readable', function () { pm.response.to.have.status(200); });",
+              "const rows = pm.response.json().checklist.morning;",
+              "pm.expect(rows.some(row => row.product.id === pm.collectionVariables.get('productId') && row.done)).to.eql(true);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/calendar/{{profileId}}?for_date={{today}}"
+      }
+    },
+    {
+      "name": "Send chat message",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('chat succeeds or reports unavailable model', function () { pm.expect([200, 503]).to.include(pm.response.code); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Give one brief skincare routine tip.\"\n}"
+        },
+        "url": "{{baseUrl}}/api/chat/{{profileId}}"
+      }
+    },
+    {
+      "name": "Delete favorite",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('favorite is removed', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/favorites/{{profileId}}/{{productId}}"
+      }
+    },
+    {
+      "name": "Delete plan item",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('plan item is removed', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/api/plan/{{profileId}}/items/{{itemId}}"
+      }
+    },
+    {
+      "name": "Logout",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('logout succeeds', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/auth/logout"
+      }
+    },
+    {
+      "name": "Verify session is closed",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('protected endpoint rejects logged-out session', function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/auth/me"
+      }
+    }
+  ]
+}
