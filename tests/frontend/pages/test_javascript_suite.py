@@ -10,7 +10,7 @@ def test_javascript_frontend_unit_suite():
     assert node, "Node.js is required for the frontend unit tests"
 
     result = subprocess.run(
-        [node, "--test", "tests/frontend/js"],
+        [node, "--test", "tests/frontend/js/*.test.js"],
         cwd=root,
         capture_output=True,
         text=True,
