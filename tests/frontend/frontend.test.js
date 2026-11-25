@@ -146,7 +146,13 @@ test("login submits trimmed email and displays server validation errors", async 
   email.value = "";
   password.value = "пароль🔑";
   assert.equal(form.checkValidity(), false);
+  form.requestSubmit();
   assert.equal(requests.length, 0, "required fields must block submission");
+
+  email.value = "not-an-email";
+  assert.equal(form.checkValidity(), false);
+  form.requestSubmit();
+  assert.equal(requests.length, 0, "malformed email must block submission");
 
   email.value = "  ё@почта.рф  ";
   document.querySelector('[data-mode="register"]').click();
@@ -285,6 +291,8 @@ test("chat rejects whitespace, accepts the 1000-character boundary and trims mes
   input.value = " \n\t";
   input.dispatchEvent(inputEvent(window));
   assert.equal(send.disabled, true);
+  document.getElementById("chatForm").requestSubmit();
+  assert.equal(requests.some(request => request.url.pathname === "/api/chat/profile-1"), false);
 
   input.value = `  ${"x".repeat(996)}  `;
   input.dispatchEvent(inputEvent(window));
