@@ -38,6 +38,51 @@ def test_register_short_password(client):
     assert response.status_code == 400
     assert "не короче 6 символов" in response.json()["detail"]
 
+def test_register_trims_email_and_stores_password_hash(client, db):
+    """Регистрация сохраняет нормализованную почту и только хэш пароля."""
+    response = client.post(
+        "/api/auth/register",
+        json={"email": "  stored@example.com  ", "password": "secret123"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "stored@example.com"
+
+    user = db.execute(
+        "SELECT email, password_hash FROM users WHERE email=?",
+        ("stored@example.com",),
+    ).fetchone()
+    assert user is not None
+    assert user["email"] == "stored@example.com"
+    assert user["password_hash"].startswith("pbkdf2_sha256$")
+    assert "secret123" not in user["password_hash"]
+
+    session = db.execute(
+        "SELECT token, user_id FROM sessions WHERE user_id=(SELECT id FROM users WHERE email=?)",
+        ("stored@example.com",),
+    ).fetchone()
+    assert session is not None
+    assert session["token"]
+
+def test_register_duplicate_email_is_case_insensitive(client):
+    first = client.post(
+        "/api/auth/register",
+        json={"email": "Case@example.com", "password": "secret123"},
+    )
+    second = client.post(
+        "/api/auth/register",
+        json={"email": "case@EXAMPLE.COM", "password": "another123"},
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 409
+    assert "уже зарегистрирована" in second.json()["detail"]
+
+def test_register_missing_fields_return_validation_error(client):
+    response = client.post("/api/auth/register", json={"email": "missing@example.com"})
+
+    assert response.status_code == 422
+
 def test_login_success(client, test_user):
     """Успешный вход по правильным данным."""
     response = client.post("/api/auth/login", json={"email": test_user["email"], "password": test_user["password"]})

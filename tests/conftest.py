@@ -1,7 +1,8 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend'))
+sys.path.insert(0, BACKEND_DIR)
 
 import pytest
 from fastapi.testclient import TestClient

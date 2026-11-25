@@ -28,6 +28,20 @@ def test_validate_credentials(email, password, ok):
             validate_credentials(email, password)
         assert err.value.status_code == 400
 
+@pytest.mark.parametrize("email", [
+    "plain",
+    "@example.com",
+    "user@",
+    "user@example",
+    "user @example.com",
+    "user@example.",
+])
+def test_validate_credentials_rejects_malformed_email(email):
+    with pytest.raises(HTTPException) as err:
+        validate_credentials(email, "123456")
+    assert err.value.status_code == 400
+    assert "не адрес почты" in err.value.detail
+
 def test_hash_and_verify_password():
     pwd = "supersecret"
     hashed = hash_password(pwd)
