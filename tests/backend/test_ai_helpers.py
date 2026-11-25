@@ -1,12 +1,17 @@
 import pytest
 from app.services.ai import _strip_reasoning, _profile_context
 
-def test_strip_reasoning():
-    text_with_reasoning = "<thought>Думаю...</thought>Ответ для пользователя"
-    assert _strip_reasoning(text_with_reasoning) == "<thought>Думаю...</thought>Ответ для пользователя"
-    
-    text_clean = "Просто ответ"
-    assert _strip_reasoning(text_clean) == "Просто ответ"
+
+@pytest.mark.parametrize(("text", "expected"), [
+    ("<think>Думаю...</think>Ответ", "Ответ"),
+    ("<THINK>\nДумаю...\n</THINK>\nОтвет", "Ответ"),
+    ("<reasoning>Шаг 1\nШаг 2</reasoning>Ответ", "Ответ"),
+    ("<think>Внутреннее</think><reasoning>Ещё</reasoning>Ответ", "Ответ"),
+    ("<thought>Оставить</thought>Ответ", "<thought>Оставить</thought>Ответ"),
+    ("Просто ответ", "Просто ответ"),
+])
+def test_strip_reasoning(text, expected):
+    assert _strip_reasoning(text) == expected
 
 def test_profile_context():
     profile = {

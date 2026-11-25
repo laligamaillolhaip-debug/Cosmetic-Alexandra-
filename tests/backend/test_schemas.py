@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from app.schemas import ProfileIn, ChatIn, CredentialsIn, PlanItemIn
+from app.schemas import ProfileIn, ChatIn, CredentialsIn, PlanItemIn, ReorderIn
 
 
 @pytest.mark.parametrize("email", [
@@ -33,6 +33,36 @@ def test_credentials_reject_email_above_max_length():
 def test_credentials_reject_password_outside_length_bounds(password):
     with pytest.raises(ValidationError):
         CredentialsIn(email="valid@example.com", password=password)
+
+
+@pytest.mark.parametrize(("length", "is_valid"), [
+    (2, False),
+    (3, True),
+    (160, True),
+    (161, False),
+])
+def test_credentials_email_exact_length_boundaries(length, is_valid):
+    values = {"email": "a" * length, "password": "123456"}
+    if is_valid:
+        assert CredentialsIn(**values).email == values["email"]
+    else:
+        with pytest.raises(ValidationError):
+            CredentialsIn(**values)
+
+
+@pytest.mark.parametrize(("length", "is_valid"), [
+    (0, False),
+    (1, True),
+    (200, True),
+    (201, False),
+])
+def test_credentials_password_exact_length_boundaries(length, is_valid):
+    values = {"email": "valid@example.com", "password": "p" * length}
+    if is_valid:
+        assert CredentialsIn(**values).password == values["password"]
+    else:
+        with pytest.raises(ValidationError):
+            CredentialsIn(**values)
 
 @pytest.mark.parametrize("budget, is_valid", [
     (300, True),
@@ -90,3 +120,19 @@ def test_plan_item_time_of_day(time_of_day, is_valid):
     else:
         with pytest.raises(ValidationError):
             PlanItemIn(**data)
+
+
+@pytest.mark.parametrize(("time_of_day", "is_valid"), [
+    ("morning", True),
+    ("evening", True),
+    ("noon", False),
+    ("Morning", False),
+    ("", False),
+])
+def test_reorder_time_of_day(time_of_day, is_valid):
+    values = {"item_ids": [1], "time_of_day": time_of_day}
+    if is_valid:
+        ReorderIn(**values)
+    else:
+        with pytest.raises(ValidationError):
+            ReorderIn(**values)

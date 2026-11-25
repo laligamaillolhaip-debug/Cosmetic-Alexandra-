@@ -42,6 +42,21 @@ def test_validate_credentials_rejects_malformed_email(email):
     assert err.value.status_code == 400
     assert "не адрес почты" in err.value.detail
 
+
+@pytest.mark.parametrize(("password", "is_valid"), [
+    ("", False),
+    ("a", False),
+    ("12345", False),
+    ("123456", True),
+])
+def test_validate_credentials_password_business_boundary(password, is_valid):
+    if is_valid:
+        validate_credentials("valid@example.com", password)
+    else:
+        with pytest.raises(HTTPException) as err:
+            validate_credentials("valid@example.com", password)
+        assert err.value.status_code == 400
+
 def test_hash_and_verify_password():
     pwd = "supersecret"
     hashed = hash_password(pwd)
