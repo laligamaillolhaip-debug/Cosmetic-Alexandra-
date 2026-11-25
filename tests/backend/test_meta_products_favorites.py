@@ -2,7 +2,7 @@ import pytest
 import uuid
 from datetime import date
 from app.database import get_db
-from tests.test_calendar_router import create_test_profile_and_product
+from tests.backend.test_calendar_router import create_test_profile_and_product
 
 def test_get_meta_options(client):
     response = client.get("/api/meta/options")

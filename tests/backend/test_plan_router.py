@@ -6,7 +6,7 @@ def test_get_plan(client, test_user):
     client.post("/api/auth/login", json={"email": test_user["email"], "password": test_user["password"]})
     
     # Создаем профиль и продукт через функцию из calendar (она импортируется)
-    from tests.test_calendar_router import create_test_profile_and_product
+    from tests.backend.test_calendar_router import create_test_profile_and_product
     profile_id, _ = create_test_profile_and_product(test_user["email"])
     
     response = client.get(f"/api/plan/{profile_id}")
@@ -16,7 +16,7 @@ def test_get_plan(client, test_user):
     assert len(data["plan"]["morning"]) > 0
 
 def test_add_and_remove_item(client, test_user):
-    from tests.test_calendar_router import create_test_profile_and_product
+    from tests.backend.test_calendar_router import create_test_profile_and_product
     client.post("/api/auth/login", json={"email": test_user["email"], "password": test_user["password"]})
     profile_id, product_id = create_test_profile_and_product(test_user["email"])
     
@@ -39,7 +39,7 @@ def test_add_and_remove_item(client, test_user):
     assert len(plan["plan"]["evening"]) == 0
 
 def test_reorder(client, test_user):
-    from tests.test_calendar_router import create_test_profile_and_product
+    from tests.backend.test_calendar_router import create_test_profile_and_product
     client.post("/api/auth/login", json={"email": test_user["email"], "password": test_user["password"]})
     profile_id, product_id = create_test_profile_and_product(test_user["email"])
     

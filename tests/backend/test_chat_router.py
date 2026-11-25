@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
 from app.services import ai
-from tests.test_calendar_router import create_test_profile_and_product # Импортируем нашу функцию
+from tests.backend.test_calendar_router import create_test_profile_and_product # Импортируем нашу функцию
 
 def test_get_history_empty(client, test_user):
     client.post("/api/auth/login", json={"email": test_user["email"], "password": test_user["password"]})
