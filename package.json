@@ -2,7 +2,7 @@
   "name": "cosmetic-alexandra-frontend-tests",
   "private": true,
   "scripts": {
-    "test:frontend": "node --test tests/frontend/frontend.test.js"
+    "test:frontend": "node --test tests/frontend/js"
   },
   "devDependencies": {
     "jsdom": "^26.1.0"
