@@ -89,6 +89,7 @@ def test_signup_quiz_ai_plan_and_chat_persist(page):
     next_button.click()
 
     expect(page).to_have_url(f"{BASE_URL}/budget.html")
+    expect(page.locator("#presets .preset").first).to_be_visible()
     page.locator("#budgetSlider").evaluate(
         "(slider) => { slider.value = '20000'; slider.dispatchEvent(new Event('input', { bubbles: true })); }"
     )
